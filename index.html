@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shake Match Game with ECG-like Acceleration Visualization</title>
+    <title>Vertical Shake Match Game with Visualization</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -73,8 +73,8 @@
     <div id="controls">
         <div>
             <label for="sensitivity">Shake Sensitivity:</label>
-            <input type="range" id="sensitivity" min="5" max="25" value="15">
-            <span id="sensitivityValue">15</span>
+            <input type="range" id="sensitivity" min="1" max="10" value="5">
+            <span id="sensitivityValue">5</span>
         </div>
     </div>
     <button id="startButton">Start Game</button>
@@ -95,10 +95,12 @@
         let score = 0;
         let isGameRunning = false;
         let lastShakeTime = 0;
-        let shakeThreshold = 15;
+        let shakeThreshold = 5;
         let isDesktop = !('ontouchstart' in window);
 
         let accelerationValues = new Array(300).fill(0);
+        let lastAcceleration = 0;
+        let shakeState = 'idle';
 
         // Set canvas size
         canvas.width = 300;
@@ -127,7 +129,7 @@
 
             let currentTime = Date.now();
 
-            if (currentTime - lastShakeTime > 300) {
+            if (currentTime - lastShakeTime > 500) {
                 lastShakeTime = currentTime;
                 updateScore(1);
                 gameArea.textContent = "Good shake! +1";
@@ -147,7 +149,7 @@
             }
         });
 
-        shakeButton.addEventListener('click', handleShake);
+        shakeButton.addEventListener('click', simulateShake);
 
         function requestMotionPermission() {
             if (typeof DeviceMotionEvent?.requestPermission === 'function') {
@@ -168,15 +170,32 @@
         function handleShakeMotion(event) {
             if (!isGameRunning) return;
 
-            let acceleration = event.accelerationIncludingGravity;
-            let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
+            let acceleration = event.accelerationIncludingGravity.y;
+            let accelerationChange = acceleration - lastAcceleration;
 
-            accelerationValues.push(shakeMagnitude);
+            accelerationValues.push(accelerationChange);
             accelerationValues.shift();
 
-            if (shakeMagnitude > shakeThreshold) {
-                handleShake();
+            switch (shakeState) {
+                case 'idle':
+                    if (accelerationChange < -shakeThreshold) {
+                        shakeState = 'moving_down';
+                    }
+                    break;
+                case 'moving_down':
+                    if (accelerationChange > shakeThreshold) {
+                        shakeState = 'moving_up';
+                    }
+                    break;
+                case 'moving_up':
+                    if (accelerationChange < 0) {
+                        handleShake();
+                        shakeState = 'idle';
+                    }
+                    break;
             }
+
+            lastAcceleration = acceleration;
         }
 
         function drawAcceleration() {
@@ -186,7 +205,7 @@
             ctx.moveTo(0, canvas.height / 2);
 
             for (let i = 0; i < accelerationValues.length; i++) {
-                let y = canvas.height / 2 - (accelerationValues[i] * 5);
+                let y = canvas.height / 2 - (accelerationValues[i] * 10);
                 ctx.lineTo(i, y);
             }
 
@@ -194,10 +213,12 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Draw threshold line
+            // Draw threshold lines
             ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2 - (shakeThreshold * 5));
-            ctx.lineTo(canvas.width, canvas.height / 2 - (shakeThreshold * 5));
+            ctx.moveTo(0, canvas.height / 2 - (shakeThreshold * 10));
+            ctx.lineTo(canvas.width, canvas.height / 2 - (shakeThreshold * 10));
+            ctx.moveTo(0, canvas.height / 2 + (shakeThreshold * 10));
+            ctx.lineTo(canvas.width, canvas.height / 2 + (shakeThreshold * 10));
             ctx.strokeStyle = 'red';
             ctx.lineWidth = 1;
             ctx.stroke();
@@ -206,14 +227,36 @@
         }
 
         sensitivitySlider.addEventListener('input', function() {
-            shakeThreshold = 30 - this.value;
+            shakeThreshold = 11 - this.value;
             sensitivityValue.textContent = this.value;
         });
 
         // Simulate acceleration for desktop
+        function simulateShake() {
+            let simulatedAccelerations = [
+                -15, -10, -5, 0, 5, 10, 15, 10, 5, 0, -5, -10
+            ];
+            
+            let i = 0;
+            let interval = setInterval(() => {
+                if (i >= simulatedAccelerations.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                let acceleration = simulatedAccelerations[i];
+                accelerationValues.push(acceleration);
+                accelerationValues.shift();
+                
+                handleShakeMotion({ accelerationIncludingGravity: { y: acceleration } });
+                
+                i++;
+            }, 50);
+        }
+
         if (isDesktop) {
             setInterval(() => {
-                let randomAcceleration = Math.random() * 20;
+                let randomAcceleration = (Math.random() - 0.5) * 2;
                 accelerationValues.push(randomAcceleration);
                 accelerationValues.shift();
             }, 50);
