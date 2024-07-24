@@ -137,9 +137,6 @@
         let isFeverMode = false;
         let feverTimer;
         let feverVibrationTimer;
-        let lastFeverShakeTime = 0;
-        let feverScoreMultiplier = 1;
-        let feverShakeCount = 0;
 
         if (tg) tg.ready();
 
@@ -168,7 +165,13 @@
         }
 
         function gameLoop() {
-            if (isFeverMode) return;
+            if (isFeverMode) {
+                canScore = true;  // Set a brief window to score
+                setTimeout(() => {
+                    canScore = false;  // End scoring window
+                }, 200);  // Duration of the scoring window
+                return;
+            }
             let currentTime = Date.now();
             if (currentTime - lastVibrationTime >= vibrationInterval) {
                 vibrate();
@@ -222,13 +225,9 @@
             let currentTime = Date.now();
 
             if (isFeverMode) {
-                let shakeInterval = currentTime - lastFeverShakeTime;
-                lastFeverShakeTime = currentTime;
-                if (shakeInterval < 500) { // If shake interval is less than 500ms, count as a valid shake
-                    feverShakeCount++;
-                    feverScoreMultiplier = Math.min(5, feverShakeCount); // Maximum multiplier of 5
-                    updateScore(feverScoreMultiplier);
-                    gameArea.textContent = `FEVER!!! Score: ${score} (x${feverScoreMultiplier})`;
+                if (canScore) {  // Ensure we're in the "can score" window
+                    updateScore(1);
+                    gameArea.textContent = `FEVER!!! Score: ${score}`;
                 }
                 return;
             }
@@ -268,8 +267,6 @@
                     tg.HapticFeedback.impactOccurred('medium');
                 }
             }, 200);
-            lastFeverShakeTime = Date.now();
-            feverShakeCount = 0;
         }
 
         function endFeverMode() {
@@ -316,36 +313,6 @@
 
             if (shakeMagnitude > shakeThreshold) {
                 handleShake();
-            }
-
-            if (!isFeverMode) {
-                let accelerationChange = acceleration.y - lastAcceleration;
-                let currentTime = Date.now();
-
-                switch (shakeState) {
-                    case 'idle':
-                        if (accelerationChange < -shakeThreshold) {
-                            shakeState = 'moving_down';
-                            lastDirectionChangeTime = currentTime;
-                        }
-                        break;
-                    case 'moving_down':
-                        if (accelerationChange > shakeThreshold) {
-                            shakeState = 'moving_up';
-                            lastDirectionChangeTime = currentTime;
-                        }
-                        break;
-                    case 'moving_up':
-                        if (currentTime - lastDirectionChangeTime > minShakeInterval) {
-                            shakeState = 'idle';
-                        } else if (accelerationChange < -shakeThreshold) {
-                            shakeState = 'moving_down';
-                            lastDirectionChangeTime = currentTime;
-                        }
-                        break;
-                }
-
-                lastAcceleration = acceleration.y;
             }
         }
 
