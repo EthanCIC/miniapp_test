@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shake Match Game</title>
+    <title>Shake Match Game with FEVER Mode</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -224,10 +224,16 @@
                 return;
             }
 
-            if (isVibrating && canScore && (currentTime - lastVibrationTime <= judgmentWindow)) {
-                updateScore(1);
-                canScore = false;
-                gameArea.textContent = "Good shake! +1";
+            if (currentTime - lastShakeTime > minShakeInterval) {
+                lastShakeTime = currentTime;
+                if (isVibrating && canScore && (currentTime - lastVibrationTime <= judgmentWindow)) {
+                    updateScore(1);
+                    canScore = false;
+                    gameArea.textContent = "Good shake! +1";
+                } else if (!isVibrating) {
+                    updateScore(-1);
+                    gameArea.textContent = "Bad timing! -1";
+                }
             }
         }
 
@@ -326,6 +332,7 @@
                         break;
                     case 'moving_up':
                         if (currentTime - lastDirectionChangeTime > minShakeInterval) {
+                            handleShake();
                             shakeState = 'idle';
                         } else if (accelerationChange < -shakeThreshold) {
                             shakeState = 'moving_down';
