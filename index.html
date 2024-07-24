@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vertical Shake Match Game with Improved Detection</title>
+    <title>Simplified Vertical Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -94,13 +94,12 @@
         let ctx = canvas.getContext('2d');
         let score = 0;
         let isGameRunning = false;
-        let lastShakeTime = 0;
         let shakeThreshold = 5;
         let isDesktop = !('ontouchstart' in window);
 
         let accelerationValues = new Array(300).fill(0);
         let lastAcceleration = 0;
-        let shakeState = 'idle';
+        let isBelowThreshold = false;
 
         // Set canvas size
         canvas.width = 300;
@@ -126,14 +125,8 @@
 
         function handleShake() {
             if (!isGameRunning) return;
-
-            let currentTime = Date.now();
-
-            if (currentTime - lastShakeTime > 500) {
-                lastShakeTime = currentTime;
-                updateScore(1);
-                gameArea.textContent = "Good shake! +1";
-            }
+            updateScore(1);
+            gameArea.textContent = "Good shake! +1";
         }
 
         function updateScore(change) {
@@ -176,28 +169,11 @@
             accelerationValues.push(accelerationChange);
             accelerationValues.shift();
 
-            switch (shakeState) {
-                case 'idle':
-                    if (accelerationChange < -shakeThreshold) {
-                        shakeState = 'moving_down';
-                    }
-                    break;
-                case 'moving_down':
-                    if (Math.abs(accelerationChange) < shakeThreshold / 2) {
-                        shakeState = 'center_from_down';
-                    }
-                    break;
-                case 'center_from_down':
-                    if (accelerationChange > shakeThreshold) {
-                        shakeState = 'moving_up';
-                    }
-                    break;
-                case 'moving_up':
-                    if (Math.abs(accelerationChange) < shakeThreshold / 2) {
-                        handleShake();
-                        shakeState = 'idle';
-                    }
-                    break;
+            if (accelerationChange < -shakeThreshold && !isBelowThreshold) {
+                isBelowThreshold = true;
+            } else if (accelerationChange > -shakeThreshold / 2 && isBelowThreshold) {
+                handleShake();
+                isBelowThreshold = false;
             }
 
             lastAcceleration = acceleration;
@@ -227,10 +203,8 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Draw threshold lines
+            // Draw threshold line (only the lower one)
             ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2 - (shakeThreshold * 5));
-            ctx.lineTo(canvas.width, canvas.height / 2 - (shakeThreshold * 5));
             ctx.moveTo(0, canvas.height / 2 + (shakeThreshold * 5));
             ctx.lineTo(canvas.width, canvas.height / 2 + (shakeThreshold * 5));
             ctx.strokeStyle = 'red';
@@ -240,7 +214,7 @@
             // Draw shake state
             ctx.fillStyle = 'black';
             ctx.font = '14px Arial';
-            ctx.fillText(`Shake State: ${shakeState}`, 10, 20);
+            ctx.fillText(`Below Threshold: ${isBelowThreshold}`, 10, 20);
 
             requestAnimationFrame(drawAcceleration);
         }
