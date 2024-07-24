@@ -7,17 +7,14 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            background-color: #000000;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #1a1a2e;
-            color: #ffffff;
-            padding: 20px;
-            box-sizing: border-box;
+            justify-content: space-between;
+            min-height: 100vh;
         }
         #scoreDisplay {
             font-size: 48px;
@@ -332,5 +329,8 @@
 
         actionButton.addEventListener('click', handleActionButton);
     </script>
+    <div id="bottomImage">
+        <img src="grass_and_balls.png" alt="Grass with sweet potatoes" style="width: 100%; height: auto;">
+    </div>
 </body>
 </html>
