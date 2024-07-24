@@ -192,8 +192,8 @@
             actionButton.textContent = 'Restart';
             requestMotionPermission();
             startShrinking();
-            updateMoleHeight();
-            document.getElementById('mole').style.display = 'block';
+            document.getElementById('mole').style.display = 'block'; // 確保地鼠可見
+            updateMoleHeight(); // 根據初始分數（0）更新地鼠高度
         }
 
         function requestMotionPermission() {
@@ -362,8 +362,9 @@
             clearInterval(shrinkInterval);
             window.removeEventListener('devicemotion', handleMotion);
             actionButton.textContent = 'Play Again';
-            updateMoleHeight();
-            document.getElementById('mole').style.display = 'none';
+            // 移除了隱藏地鼠的代碼
+            // 不重置分數，這樣地鼠位置保持不變
+            // 不調用 updateMoleHeight()，保持地鼠在當前位置
         }
 
         function handleActionButton() {
@@ -379,11 +380,13 @@
             const mole = document.getElementById('mole');
             const maxScore = 10;
             const visiblePercentage = Math.min(score / maxScore, 1);
-            const translateY = 100 - (visiblePercentage * 100);
+            const translateY = 80 - (visiblePercentage * 80); // 從100改為80
             mole.style.transform = `translateY(${translateY}%)`;
         }
 
         actionButton.addEventListener('click', handleActionButton);
+        document.getElementById('mole').style.display = 'block';
+        updateMoleHeight();
     </script>
 </body>
 </html>
