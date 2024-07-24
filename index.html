@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rhythm-based Shake Detection Game</title>
+    <title>Rhythm-based Shake Detection Game with Clear Visual Cues</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -33,12 +33,34 @@
         }
         #shakeIndicator {
             position: absolute;
-            width: 50px;
-            height: 50px;
+            width: 100px;
+            height: 100px;
             background-color: #3390ec;
             border-radius: 50%;
             opacity: 0;
-            transition: opacity 0.1s ease-in-out;
+            transition: all 0.1s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .shake {
+            animation: shake 0.5s;
+            animation-iteration-count: infinite;
         }
         button {
             padding: 10px 20px;
@@ -80,7 +102,7 @@
 <body>
     <div id="gameArea">
         Press Start to begin
-        <div id="shakeIndicator"></div>
+        <div id="shakeIndicator">SHAKE!</div>
     </div>
     <div id="controls">
         <div>
@@ -129,7 +151,7 @@
             isGameRunning = true;
             score = 0;
             scoreDisplay.textContent = `Score: ${score}`;
-            gameArea.textContent = "Get ready...";
+            gameArea.textContent = "";
             startButton.disabled = true;
             if (isDesktop) {
                 shakeButton.style.display = 'block';
@@ -137,7 +159,6 @@
             }
             
             setTimeout(() => {
-                gameArea.textContent = "Shake when the indicator lights up!";
                 requestAnimationFrame(drawAcceleration);
                 startGameLoop();
             }, 2000);
@@ -147,9 +168,14 @@
             gameInterval = setInterval(() => {
                 shakeWindowStart = Date.now();
                 shakeIndicator.style.opacity = 1;
+                shakeIndicator.classList.add('shake');
+                gameArea.classList.add('shake');
+                
                 setTimeout(() => {
                     shakeIndicator.style.opacity = 0;
-                }, 200); // Indicator visible for 200ms
+                    shakeIndicator.classList.remove('shake');
+                    gameArea.classList.remove('shake');
+                }, 200); // Indicator visible and shaking for 200ms
 
                 setTimeout(() => {
                     if (!hasShaken && !hasMissed) {
