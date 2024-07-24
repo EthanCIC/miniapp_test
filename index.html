@@ -3,33 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circle Shrink Shake Game</title>
+    <title>Improved Circle Shrink Shake Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #1a1a2e;
+            color: #ffffff;
         }
         #gameArea {
             width: 300px;
             height: 300px;
-            background-color: #000;
+            background-color: #16213e;
             position: relative;
             overflow: hidden;
             border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
         #circle {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            border: 2px solid #00ff00;
+            border: 2px solid #0f3460;
             border-radius: 50%;
             transition: all 0.05s linear;
         }
@@ -43,25 +45,40 @@
             transition: opacity 0.1s ease-in-out;
         }
         #score {
-            color: #fff;
-            font-size: 24px;
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            font-weight: bold;
+            opacity: 0.2;
+            z-index: 1;
         }
         #startButton {
             margin-top: 20px;
             padding: 10px 20px;
             font-size: 18px;
             cursor: pointer;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        #startButton:hover {
+            background-color: #d13551;
+        }
+        #startButton:disabled {
+            background-color: #7a7a7a;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
     <div id="gameArea">
+        <div id="score">0</div>
         <div id="circle"></div>
         <div id="feedback"></div>
-        <div id="score">Score: 0</div>
     </div>
     <button id="startButton">Start Game</button>
 
@@ -75,7 +92,8 @@
         let score = 0;
         let isGameRunning = false;
         let circleSize = 280;
-        let shrinkSpeed = 5;
+        let baseShrinkSpeed = 2;
+        let shrinkSpeed = baseShrinkSpeed;
         let shrinkInterval;
         let shakeThreshold = 15;
         let lastShakeTime = 0;
@@ -139,6 +157,7 @@
                     vibrateDevice();
                     setTimeout(() => {
                         circleSize = 280;
+                        updateShrinkSpeed();
                     }, 200); // Wait for 200ms before resetting
                 }
                 updateCircleSize();
@@ -153,10 +172,10 @@
         function checkShakeTiming() {
             if (circleSize <= perfectShakeWindow) {
                 updateScore(1);
-                showFeedback('#00ff00');
+                showFeedback('#4caf50');
             } else {
                 updateScore(-1);
-                showFeedback('#ff0000');
+                showFeedback('#f44336');
             }
         }
 
@@ -170,7 +189,12 @@
 
         function updateScore(change = 0) {
             score = Math.max(0, score + change);
-            scoreDisplay.textContent = `Score: ${score}`;
+            scoreDisplay.textContent = score;
+            updateShrinkSpeed();
+        }
+
+        function updateShrinkSpeed() {
+            shrinkSpeed = baseShrinkSpeed + (score * 0.1);
         }
 
         function vibrateDevice() {
