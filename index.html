@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shake Match Game</title>
+    <title>Shake Match Game with FEVER Mode</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -74,6 +74,20 @@
             margin-bottom: 10px;
             width: 100%;
         }
+        #feverOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.3);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
@@ -88,6 +102,7 @@
     <button id="startButton">Start Game</button>
     <button id="shakeButton" style="display: none;">Shake!</button>
     <div id="score">Score: 0</div>
+    <div id="feverOverlay">FEVER!!!</div>
 
     <script>
         let tg = window.Telegram?.WebApp;
@@ -97,6 +112,7 @@
         let scoreDisplay = document.getElementById('score');
         let sensitivitySlider = document.getElementById('sensitivity');
         let sensitivityValue = document.getElementById('sensitivityValue');
+        let feverOverlay = document.getElementById('feverOverlay');
         let score = 0;
         let isGameRunning = false;
         let baseVibrationInterval = 1000;
@@ -118,6 +134,9 @@
         let baseJudgmentWindow = 500;
         let judgmentWindow = baseJudgmentWindow;
 
+        let isFeverMode = false;
+        let feverTimer;
+
         if (tg) tg.ready();
 
         function startGame() {
@@ -127,6 +146,8 @@
             vibrationInterval = baseVibrationInterval;
             minShakeInterval = 300;
             judgmentWindow = baseJudgmentWindow;
+            isFeverMode = false;
+            feverOverlay.style.display = 'none';
             scoreDisplay.textContent = `Score: ${score}`;
             gameArea.textContent = "Get ready...";
             startButton.disabled = true;
@@ -179,6 +200,9 @@
         function endGame() {
             isGameRunning = false;
             clearInterval(gameTimer);
+            clearTimeout(feverTimer);
+            isFeverMode = false;
+            feverOverlay.style.display = 'none';
             gameArea.textContent = `Game Over! Your score: ${score}`;
             startButton.disabled = false;
             if (isDesktop) {
@@ -190,6 +214,12 @@
             if (!isGameRunning) return;
 
             let currentTime = Date.now();
+
+            if (isFeverMode) {
+                updateScore(1);
+                gameArea.textContent = `FEVER!!! Score: ${score}`;
+                return;
+            }
 
             if (currentTime - lastShakeTime > minShakeInterval) {
                 lastShakeTime = currentTime;
@@ -207,13 +237,34 @@
         function updateScore(change) {
             score = Math.max(0, score + change);
             scoreDisplay.textContent = `Score: ${score}`;
-            updateVibrationInterval();
+            if (score === 15 && !isFeverMode) {
+                startFeverMode();
+            } else if (!isFeverMode) {
+                updateVibrationInterval();
+            }
         }
 
         function updateVibrationInterval() {
             vibrationInterval = Math.max(MIN_POSSIBLE_INTERVAL, baseVibrationInterval - (Math.floor(score / 2) * 50));
             minShakeInterval = Math.max(MIN_POSSIBLE_INTERVAL, 300 - (Math.floor(score / 3) * 10));
             judgmentWindow = Math.max(MIN_POSSIBLE_INTERVAL, baseJudgmentWindow - (score * 10));
+        }
+
+        function startFeverMode() {
+            isFeverMode = true;
+            feverOverlay.style.display = 'flex';
+            gameArea.textContent = "FEVER!!! Shake as fast as you can!";
+            clearInterval(gameTimer);
+            feverTimer = setTimeout(endFeverMode, 10000);
+        }
+
+        function endFeverMode() {
+            isFeverMode = false;
+            feverOverlay.style.display = 'none';
+            gameArea.textContent = "Fever ended! Continue normal play.";
+            lastVibrationTime = Date.now();
+            gameTimer = setInterval(gameLoop, 100);
+            updateVibrationInterval();
         }
 
         startButton.addEventListener('click', () => {
@@ -244,6 +295,15 @@
 
         function handleShakeMotion(event) {
             if (!isGameRunning) return;
+
+            if (isFeverMode) {
+                let acceleration = event.accelerationIncludingGravity;
+                let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
+                if (shakeMagnitude > shakeThreshold) {
+                    handleShake();
+                }
+                return;
+            }
 
             let acceleration = event.accelerationIncludingGravity.y;
             let accelerationChange = acceleration - lastAcceleration;
