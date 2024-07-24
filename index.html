@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simplified Vertical Shake Match Game</title>
+    <title>Improved Vertical Shake Detection Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -94,12 +94,12 @@
         let ctx = canvas.getContext('2d');
         let score = 0;
         let isGameRunning = false;
-        let shakeThreshold = 5;
+        let shakeThreshold = 10;
         let isDesktop = !('ontouchstart' in window);
 
         let accelerationValues = new Array(300).fill(0);
-        let lastAcceleration = 0;
-        let isBelowThreshold = false;
+        let accelerationWindow = new Array(10).fill(0);
+        let lastShakeTime = 0;
 
         // Set canvas size
         canvas.width = 300;
@@ -125,8 +125,12 @@
 
         function handleShake() {
             if (!isGameRunning) return;
-            updateScore(1);
-            gameArea.textContent = "Good shake! +1";
+            let currentTime = Date.now();
+            if (currentTime - lastShakeTime > 500) {  // Prevent multiple triggers in short succession
+                updateScore(1);
+                gameArea.textContent = "Good shake! +1";
+                lastShakeTime = currentTime;
+            }
         }
 
         function updateScore(change) {
@@ -164,19 +168,19 @@
             if (!isGameRunning) return;
 
             let acceleration = event.accelerationIncludingGravity.y;
-            let accelerationChange = acceleration - lastAcceleration;
+            accelerationWindow.push(acceleration);
+            accelerationWindow.shift();
 
-            accelerationValues.push(accelerationChange);
+            let minAcc = Math.min(...accelerationWindow);
+            let maxAcc = Math.max(...accelerationWindow);
+            let range = maxAcc - minAcc;
+
+            accelerationValues.push(acceleration);
             accelerationValues.shift();
 
-            if (accelerationChange < -shakeThreshold && !isBelowThreshold) {
-                isBelowThreshold = true;
-            } else if (accelerationChange > -shakeThreshold / 2 && isBelowThreshold) {
+            if (range > shakeThreshold) {
                 handleShake();
-                isBelowThreshold = false;
             }
-
-            lastAcceleration = acceleration;
         }
 
         function drawAcceleration() {
@@ -195,7 +199,7 @@
             ctx.moveTo(0, canvas.height / 2);
 
             for (let i = 0; i < accelerationValues.length; i++) {
-                let y = canvas.height / 2 - (accelerationValues[i] * 5);
+                let y = canvas.height / 2 - (accelerationValues[i] * 2);
                 ctx.lineTo(i, y);
             }
 
@@ -205,22 +209,23 @@
 
             // Draw threshold line (only the lower one)
             ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2 + (shakeThreshold * 5));
-            ctx.lineTo(canvas.width, canvas.height / 2 + (shakeThreshold * 5));
+            ctx.moveTo(0, canvas.height / 2 + (shakeThreshold * 2));
+            ctx.lineTo(canvas.width, canvas.height / 2 + (shakeThreshold * 2));
             ctx.strokeStyle = 'red';
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // Draw shake state
+            // Draw current range
+            let range = Math.max(...accelerationWindow) - Math.min(...accelerationWindow);
             ctx.fillStyle = 'black';
             ctx.font = '14px Arial';
-            ctx.fillText(`Below Threshold: ${isBelowThreshold}`, 10, 20);
+            ctx.fillText(`Current Range: ${range.toFixed(2)}`, 10, 20);
 
             requestAnimationFrame(drawAcceleration);
         }
 
         sensitivitySlider.addEventListener('input', function() {
-            shakeThreshold = 11 - this.value;
+            shakeThreshold = 20 - this.value * 1.5;
             sensitivityValue.textContent = this.value;
         });
 
@@ -238,9 +243,6 @@
                 }
                 
                 let acceleration = simulatedAccelerations[i];
-                accelerationValues.push(acceleration);
-                accelerationValues.shift();
-                
                 handleShakeMotion({ accelerationIncludingGravity: { y: acceleration } });
                 
                 i++;
@@ -250,8 +252,7 @@
         if (isDesktop) {
             setInterval(() => {
                 let randomAcceleration = (Math.random() - 0.5) * 2;
-                accelerationValues.push(randomAcceleration);
-                accelerationValues.shift();
+                handleShakeMotion({ accelerationIncludingGravity: { y: randomAcceleration } });
             }, 50);
         }
 
