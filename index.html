@@ -136,6 +136,7 @@
 
         let isFeverMode = false;
         let feverTimer;
+        let feverVibrationTimer;
 
         if (tg) tg.ready();
 
@@ -201,6 +202,7 @@
             isGameRunning = false;
             clearInterval(gameTimer);
             clearTimeout(feverTimer);
+            clearInterval(feverVibrationTimer);
             isFeverMode = false;
             feverOverlay.style.display = 'none';
             gameArea.textContent = `Game Over! Your score: ${score}`;
@@ -256,11 +258,19 @@
             gameArea.textContent = "FEVER!!! Shake as fast as you can!";
             clearInterval(gameTimer);
             feverTimer = setTimeout(endFeverMode, 10000);
+            
+            // 开始连续震动
+            feverVibrationTimer = setInterval(() => {
+                if (tg?.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            }, 200);  // 每200毫秒震动一次
         }
 
         function endFeverMode() {
             isFeverMode = false;
             feverOverlay.style.display = 'none';
+            clearInterval(feverVibrationTimer);
             gameArea.textContent = "Fever ended! Continue normal play.";
             lastVibrationTime = Date.now();
             gameTimer = setInterval(gameLoop, 100);
@@ -296,17 +306,17 @@
         function handleShakeMotion(event) {
             if (!isGameRunning) return;
 
+            let acceleration = event.accelerationIncludingGravity;
+            let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
+
             if (isFeverMode) {
-                let acceleration = event.accelerationIncludingGravity;
-                let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
                 if (shakeMagnitude > shakeThreshold) {
                     handleShake();
                 }
                 return;
             }
 
-            let acceleration = event.accelerationIncludingGravity.y;
-            let accelerationChange = acceleration - lastAcceleration;
+            let accelerationChange = acceleration.y - lastAcceleration;
             let currentTime = Date.now();
 
             switch (shakeState) {
@@ -333,7 +343,7 @@
                     break;
             }
 
-            lastAcceleration = acceleration;
+            lastAcceleration = acceleration.y;
         }
 
         sensitivitySlider.addEventListener('input', function() {
