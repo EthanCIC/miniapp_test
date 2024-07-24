@@ -239,7 +239,7 @@
         function updateScore(change) {
             score = Math.max(0, score + change);
             scoreDisplay.textContent = `Score: ${score}`;
-            if (score === 15 && !isFeverMode) {
+            if (score === 10 && !isFeverMode) {
                 startFeverMode();
             } else if (!isFeverMode) {
                 updateVibrationInterval();
