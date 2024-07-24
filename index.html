@@ -35,6 +35,15 @@
             border-radius: 50%;
             transition: all 0.05s linear;
         }
+        #timeWindow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid #4caf50;
+            border-radius: 50%;
+            transition: all 0.05s linear;
+        }
         #feedback {
             position: absolute;
             top: 0;
@@ -77,6 +86,7 @@
 <body>
     <div id="gameArea">
         <div id="score">0</div>
+        <div id="timeWindow"></div>
         <div id="circle"></div>
         <div id="feedback"></div>
     </div>
@@ -86,13 +96,14 @@
         let tg = window.Telegram.WebApp;
         let gameArea = document.getElementById('gameArea');
         let circle = document.getElementById('circle');
+        let timeWindow = document.getElementById('timeWindow');
         let feedback = document.getElementById('feedback');
         let startButton = document.getElementById('startButton');
         let scoreDisplay = document.getElementById('score');
         let score = 0;
         let isGameRunning = false;
         let circleSize = 280;
-        let baseShrinkSpeed = 8; // 增加初始縮小速度
+        let baseShrinkSpeed = 4;
         let shrinkSpeed = baseShrinkSpeed;
         let shrinkInterval;
         let shakeThreshold = 15;
@@ -164,6 +175,7 @@
                     resetCircle();
                 }
                 updateCircleSize();
+                updateTimeWindow();
             }, 20);
         }
 
@@ -171,9 +183,10 @@
             clearInterval(shrinkInterval);
             circleSize = 280;
             updateCircleSize();
+            updateTimeWindow();
             pointDeducted = false;
             updateShrinkSpeed();
-            setTimeout(startShrinking, 100); // 短暫延遲以確保新圈圈的出現是可見的
+            setTimeout(startShrinking, 100);
         }
 
         function updateCircleSize() {
@@ -181,10 +194,17 @@
             circle.style.height = Math.max(0, circleSize) + 'px';
         }
 
+        function updateTimeWindow() {
+            let windowSize = Math.max(0, circleSize - perfectShakeWindow);
+            timeWindow.style.width = windowSize + 'px';
+            timeWindow.style.height = windowSize + 'px';
+        }
+
         function checkShakeTiming() {
             if (circleSize <= perfectShakeWindow) {
                 updateScore(1);
                 showFeedback('#4caf50');
+                vibrateDevice(); // 成功 shake 時震動
                 resetCircle();
             } else if (!pointDeducted) {
                 updateScore(-1);
@@ -208,8 +228,8 @@
         }
 
         function updateShrinkSpeed() {
-            shrinkSpeed = baseShrinkSpeed + (score * 0.8); // 增加難度提升的速度
-            perfectShakeWindow = Math.max(10, 50 - score * 1.5); // 更快地縮小完美時間窗口
+            shrinkSpeed = baseShrinkSpeed + (score * 0.4);
+            perfectShakeWindow = Math.max(10, 50 - score * 1.5);
         }
 
         function vibrateDevice() {
