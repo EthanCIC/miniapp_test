@@ -169,6 +169,7 @@
         }
 
         function handleMotion(event) {
+            if (!isGameRunning) return; // Prevent motion handling if game is not running
             let acceleration = event.accelerationIncludingGravity;
             let acc = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
             
@@ -185,6 +186,7 @@
         }
 
         function handleShake() {
+            if (!isGameRunning) return; // Prevent shake handling if game is not running
             let currentTime = Date.now();
             if (isFeverMode) {
                 if (currentTime - lastShakeTime > 100) { // Allow more frequent shakes in FEVER mode
@@ -204,7 +206,7 @@
             currentCycleScoreChanged = false;
             isInTimeWindow = false;
             shrinkInterval = setInterval(() => {
-                if (!isFeverMode) {
+                if (!isFeverMode && isGameRunning) {
                     circleSize -= shrinkSpeed;
                     if (circleSize <= 0) {
                         if (!currentCycleScoreChanged) {
@@ -298,12 +300,9 @@
                 feverCountdown.textContent = countdownTime;
                 if (countdownTime <= 0) {
                     clearInterval(feverCountdownInterval);
+                    endFeverMode();
                 }
             }, 1000);
-
-            feverModeTimer = setTimeout(() => {
-                endFeverMode();
-            }, 10000); // FEVER mode lasts for 10 seconds
         }
 
         function endFeverMode() {
@@ -311,26 +310,24 @@
             feverModeDisplay.style.opacity = 0;
             feverCountdown.style.display = 'none';
             clearInterval(feverCountdownInterval);
-            clearTimeout(feverModeTimer);
-            circle.style.display = 'block';
-            timeWindow.style.display = 'block';
             endGame();
         }
 
         function endGame() {
             isGameRunning = false;
+            clearInterval(shrinkInterval);
+            window.removeEventListener('devicemotion', handleMotion);
             actionButton.textContent = 'Play Again';
         }
 
         function handleActionButton() {
             if (isGameRunning) {
-                // If the game is running, restart it
-                clearInterval(shrinkInterval);
-                clearTimeout(feverModeTimer);
-                clearInterval(feverCountdownInterval);
+                // If the game is running, end it
+                endFeverMode();
                 endGame();
+            } else {
+                startGame();
             }
-            startGame();
         }
 
         actionButton.addEventListener('click', handleActionButton);
