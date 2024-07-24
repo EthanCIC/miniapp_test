@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cross-Platform Shake Match Game</title>
+    <title>Optimized Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -80,9 +80,9 @@
     <div id="gameArea">Press Start to begin</div>
     <div id="controls">
         <select id="vibrationMode">
-            <option value="single">Single Vibration</option>
-            <option value="double">Double Vibration</option>
-            <option value="long">Long Vibration</option>
+            <option value="light">Light Vibration</option>
+            <option value="medium" selected>Medium Vibration</option>
+            <option value="heavy">Strong Vibration</option>
         </select>
         <div>
             <label for="sensitivity">Shake Sensitivity:</label>
@@ -151,8 +151,7 @@
                 canScore = true;
                 setTimeout(() => {
                     if (canScore) {
-                        score = Math.max(0, score - 1);
-                        scoreDisplay.textContent = `Score: ${score}`;
+                        updateScore(-1);
                         gameArea.textContent = "Missed shake! -1";
                     }
                     isVibrating = false;
@@ -164,18 +163,7 @@
         function vibrate() {
             if (tg?.HapticFeedback) {
                 let mode = vibrationModeSelect.value;
-                switch(mode) {
-                    case 'single':
-                        tg.HapticFeedback.impactOccurred('heavy');
-                        break;
-                    case 'double':
-                        tg.HapticFeedback.impactOccurred('heavy');
-                        setTimeout(() => tg.HapticFeedback.impactOccurred('heavy'), 100);
-                        break;
-                    case 'long':
-                        tg.HapticFeedback.notificationOccurred('error');
-                        break;
-                }
+                tg.HapticFeedback.impactOccurred(mode);
             }
             console.log("Vibration triggered");
         }
@@ -207,21 +195,25 @@
             if (currentTime - lastShakeTime > 200) {
                 lastShakeTime = currentTime;
                 if (isVibrating && canScore) {
-                    score++;
+                    updateScore(1);
                     canScore = false;
                     gameArea.textContent = "Good shake! +1";
-                    updateVibrationInterval();
                 } else if (!isVibrating) {
-                    score = Math.max(0, score - 1);
+                    updateScore(-1);
                     gameArea.textContent = "Bad timing! -1";
-                    updateVibrationInterval();
                 }
-                scoreDisplay.textContent = `Score: ${score}`;
             }
         }
 
+        function updateScore(change) {
+            score = Math.max(0, score + change);
+            scoreDisplay.textContent = `Score: ${score}`;
+            updateVibrationInterval();
+        }
+
         function updateVibrationInterval() {
-            vibrationInterval = Math.max(100, baseVibrationInterval - (score * 50));
+            vibrationInterval = Math.max(300, baseVibrationInterval - (score * 50));
+            console.log(`New vibration interval: ${vibrationInterval}ms`);
         }
 
         startButton.addEventListener('click', () => {
