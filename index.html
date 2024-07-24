@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Optimized Shake Match Game</title>
+    <title>Fixed and Improved Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -44,7 +44,7 @@
             background-color: #cccccc;
             cursor: not-allowed;
         }
-        #score, #controls {
+        #score, #controls, #debug {
             font-size: 20px;
             margin-top: 20px;
         }
@@ -79,11 +79,6 @@
 <body>
     <div id="gameArea">Press Start to begin</div>
     <div id="controls">
-        <select id="vibrationMode">
-            <option value="light">Light Vibration</option>
-            <option value="medium" selected>Medium Vibration</option>
-            <option value="heavy">Strong Vibration</option>
-        </select>
         <div>
             <label for="sensitivity">Shake Sensitivity:</label>
             <input type="range" id="sensitivity" min="5" max="25" value="15">
@@ -93,6 +88,7 @@
     <button id="startButton">Start Game</button>
     <button id="shakeButton" style="display: none;">Shake!</button>
     <div id="score">Score: 0</div>
+    <div id="debug"></div>
 
     <script>
         let tg = window.Telegram?.WebApp;
@@ -100,9 +96,9 @@
         let startButton = document.getElementById('startButton');
         let shakeButton = document.getElementById('shakeButton');
         let scoreDisplay = document.getElementById('score');
-        let vibrationModeSelect = document.getElementById('vibrationMode');
         let sensitivitySlider = document.getElementById('sensitivity');
         let sensitivityValue = document.getElementById('sensitivityValue');
+        let debugArea = document.getElementById('debug');
         let score = 0;
         let isGameRunning = false;
         let baseVibrationInterval = 1000;
@@ -112,8 +108,11 @@
         let gameTimer;
         let canScore = false;
         let lastShakeTime = 0;
-        let shakeThreshold = 15;
+        let shakeThreshold = 2;
         let isDesktop = !('ontouchstart' in window);
+
+        let lastAcceleration = 0;
+        let isMovingDown = false;
 
         if (tg) {
             tg.ready();
@@ -162,10 +161,9 @@
 
         function vibrate() {
             if (tg?.HapticFeedback) {
-                let mode = vibrationModeSelect.value;
-                tg.HapticFeedback.impactOccurred(mode);
+                tg.HapticFeedback.impactOccurred('heavy');
             }
-            console.log("Vibration triggered");
+            console.log("Strong vibration triggered");
         }
 
         function showCircle() {
@@ -192,7 +190,7 @@
 
             let currentTime = Date.now();
 
-            if (currentTime - lastShakeTime > 200) {
+            if (currentTime - lastShakeTime > 500) {
                 lastShakeTime = currentTime;
                 if (isVibrating && canScore) {
                     updateScore(1);
@@ -245,17 +243,25 @@
         function handleShakeMotion(event) {
             if (!isGameRunning) return;
 
-            let acceleration = event.accelerationIncludingGravity;
-            let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
+            let acceleration = event.accelerationIncludingGravity.y;
+            let accelerationChange = acceleration - lastAcceleration;
+            
+            debugArea.textContent = `Accel: ${acceleration.toFixed(2)}, Change: ${accelerationChange.toFixed(2)}, Threshold: ${shakeThreshold.toFixed(2)}`;
 
-            if (shakeMagnitude > shakeThreshold) {
+            if (!isMovingDown && accelerationChange < -shakeThreshold) {
+                isMovingDown = true;
+            } else if (isMovingDown && accelerationChange > shakeThreshold) {
+                isMovingDown = false;
                 handleShake();
             }
+
+            lastAcceleration = acceleration;
         }
 
         sensitivitySlider.addEventListener('input', function() {
-            shakeThreshold = 30 - this.value;  // Invert the scale
+            shakeThreshold = (30 - this.value) / 5;
             sensitivityValue.textContent = this.value;
+            debugArea.textContent = `Shake threshold set to: ${shakeThreshold.toFixed(2)}`;
         });
 
         setTimeout(endGame, 30000);
