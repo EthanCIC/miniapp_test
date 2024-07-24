@@ -13,8 +13,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
             min-height: 100vh;
+            position: relative;
+            overflow: hidden;
         }
         #scoreDisplay {
             font-size: 48px;
@@ -29,7 +31,8 @@
             overflow: hidden;
             border-radius: 50%;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-            margin-bottom: 100px; /* 調整這個值以適應底部圖片的高度 */
+            margin-bottom: 20px;
+
         }
         #circle {
             position: absolute;
@@ -110,14 +113,14 @@
             z-index: 1000;
         }
         #moleContainer {
-            position: fixed;
+            position: absolute;
             bottom: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 100px; /* 調整寬度以適應你的圖片 */
-            height: 100vh;
+            width: 100px;
+            height: 100%;
             overflow: hidden;
-            z-index: 1; /* 確保在草的後面 */
+            z-index: 1;
         }
 
         #mole {
@@ -130,22 +133,40 @@
         }
 
         #bottomImage {
-            z-index: 2; /* 確保草在地鼠前面 */
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2;
+        }
+        #gameWrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+            z-index: 3;
         }
     </style>
 </head>
 <body>
-    <div id="scoreDisplay">Score: 0</div>
-    <div id="gameArea">
-        <div id="moleContainer">
-            <img id="mole" src="deek.png" alt="Mole">
+    <div id="gameWrapper">
+        <div id="scoreDisplay">Score: 0</div>
+        <div id="gameArea">
+            <div id="timeWindow"></div>
+            <div id="circle"></div>
+            <div id="feedback"></div>
+            <div id="feverMode">FEVER!</div>
+            <div id="feverCountdown"></div>
         </div>
-        <div id="timeWindow"></div>
-        <div id="circle"></div>
-        <div id="feedback"></div>
-        <div id="feverMode">FEVER!</div>
-        <div id="feverCountdown"></div>
+        <button id="actionButton">Start</button>
     </div>
+    <div id="moleContainer">
+        <img id="mole" src="deek.png" alt="Mole">
+    </div>
+    <div id="bottomImage">
+        <img src="grass_and_balls.png" alt="Grass with sweet potatoes" style="width: 100%; height: auto;">
+    </div>
+</body>
     <button id="actionButton">Start</button>
 
     <script>
