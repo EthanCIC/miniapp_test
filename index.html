@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shake Match Game with Clear Visual Feedback</title>
+    <title>Natural Shake Motion Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -86,6 +86,9 @@
         let lastVibrationTime = 0;
         let isVibrating = false;
         let gameTimer;
+        let canScore = false;
+        let lastShakeTime = 0;
+        let shakeThreshold = 15; // 调整这个值来改变摇动的灵敏度
 
         function startGame() {
             if (isGameRunning) return;
@@ -109,6 +112,7 @@
                 showCircle();
                 lastVibrationTime = currentTime;
                 isVibrating = true;
+                canScore = true;
                 setTimeout(() => {
                     isVibrating = false;
                 }, 200); // Vibration duration
@@ -117,7 +121,7 @@
 
         function vibrate() {
             if (isTelegramWebAppAvailable && tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
+                tg.HapticFeedback.notificationOccurred('error'); // 最强震动
             }
             console.log("Vibration triggered");
         }
@@ -143,12 +147,15 @@
 
             let acceleration = event.accelerationIncludingGravity;
             let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
+            let currentTime = Date.now();
 
-            if (shakeMagnitude > 20) { // You might need to adjust this threshold
-                if (isVibrating) {
+            if (shakeMagnitude > shakeThreshold && currentTime - lastShakeTime > 200) {
+                lastShakeTime = currentTime;
+                if (isVibrating && canScore) {
                     score++;
+                    canScore = false;
                     gameArea.textContent = "Good shake! +1";
-                } else {
+                } else if (!isVibrating) {
                     score = Math.max(0, score - 1); // Prevent negative scores
                     gameArea.textContent = "Bad timing! -1";
                 }
@@ -160,7 +167,7 @@
 
         function requestMotionPermission() {
             if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                DeviceMotionEvent.requestPermission()
+实现，DeviceMotionEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
                             window.addEventListener('devicemotion', handleShake, false);
