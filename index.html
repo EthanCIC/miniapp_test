@@ -12,12 +12,11 @@
     let isGameRunning = false;
     let isFeverMode = false;
     let lastShakeTime = 0;
-    let shakeThreshold = 2;
+    let shakeThreshold = 15; // Adjust this threshold based on sensitivity settings
     let isDesktop = !('ontouchstart' in window);
 
     if (tg) tg.ready();
 
-    // Function to start the game
     function startGame() {
         if (isGameRunning) return;
         isGameRunning = true;
@@ -31,23 +30,23 @@
 
         setTimeout(() => {
             gameArea.textContent = isDesktop ? "Click 'Shake!' when you see the circle!" : "Shake when you see the circle!";
+            if (!isDesktop) {
+                window.addEventListener('devicemotion', handleShakeMotion, false);
+            }
         }, 2000);
     }
 
-    // Function to handle shake events
     function handleShake() {
-        if (!isGameRunning) return;
+        if (!isGameRunning || !isFeverMode) return;
 
         let currentTime = Date.now();
-
-        if (isFeverMode && currentTime - lastShakeTime >= 200) {  // Ensure at least 200 ms between shakes
-            updateScore(1);
+        if (currentTime - lastShakeTime >= 200) { // Ensure at least 200 ms between shakes
             lastShakeTime = currentTime;
+            updateScore(1);
             gameArea.textContent = `FEVER!!! Score: ${score}`;
         }
     }
 
-    // Update score function
     function updateScore(change) {
         score += change;
         scoreDisplay.textContent = `Score: ${score}`;
@@ -56,35 +55,29 @@
         }
     }
 
-    // Start FEVER mode
     function startFeverMode() {
         isFeverMode = true;
         feverOverlay.style.display = 'flex';
         gameArea.textContent = "FEVER!!! Shake as fast as you can!";
     }
 
-    // Event listeners for the start button and shake button
     startButton.addEventListener('click', startGame);
     shakeButton.addEventListener('click', handleShake);
 
-    // Device motion permission request for mobile devices
     function requestMotionPermission() {
         if (typeof DeviceMotionEvent?.requestPermission === 'function') {
             DeviceMotionEvent.requestPermission()
                 .then(permissionState => {
                     if (permissionState === 'granted') {
-                        window.addEventListener('devicemotion', handleShakeMotion, false);
                         startGame();
                     }
                 })
                 .catch(console.error);
         } else {
-            window.addEventListener('devicemotion', handleShakeMotion, false);
             startGame();
         }
     }
 
-    // Handle device motion
     function handleShakeMotion(event) {
         let acceleration = event.accelerationIncludingGravity;
         let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
@@ -95,7 +88,13 @@
     }
 
     sensitivitySlider.addEventListener('input', function() {
-        shakeThreshold = (30 - this.value) / 5;
+        shakeThreshold = (30 - this.value) / 5;  // Adjust sensitivity to make it easier or harder to trigger shakes
         sensitivityValue.textContent = this.value;
     });
+
+    if (isDesktop) {
+        shakeButton.addEventListener('click', handleShake);
+    } else {
+        requestMotionPermission();
+    }
 </script>
