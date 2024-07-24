@@ -92,7 +92,7 @@
         let score = 0;
         let isGameRunning = false;
         let circleSize = 280;
-        let baseShrinkSpeed = 4; // 增加初始縮小速度
+        let baseShrinkSpeed = 8; // 增加初始縮小速度
         let shrinkSpeed = baseShrinkSpeed;
         let shrinkInterval;
         let shakeThreshold = 15;
@@ -208,7 +208,7 @@
         }
 
         function updateShrinkSpeed() {
-            shrinkSpeed = baseShrinkSpeed + (score * 0.4); // 增加難度提升的速度
+            shrinkSpeed = baseShrinkSpeed + (score * 0.8); // 增加難度提升的速度
             perfectShakeWindow = Math.max(10, 50 - score * 1.5); // 更快地縮小完美時間窗口
         }
 
