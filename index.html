@@ -3,81 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Improved Shake Match Game</title>
+    <title>Shake Match Game with Clear Visual Feedback</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* 保持之前的样式不变 */
+        body {
+            font-family: sans-serif;
+            color: var(--tg-theme-text-color, #000);
+            background-color: var(--tg-theme-bg-color, #fff);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #gameArea {
+            width: 300px;
+            height: 300px;
+            border: 2px solid var(--tg-theme-button-color, #3390ec);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        #startButton {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            cursor: pointer;
+        }
+        #score {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        .circle {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background-color: rgba(51, 144, 236, 0.5);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 0.5s ease-out;
+        }
+        @keyframes pulse {
+            0% { width: 0; height: 0; opacity: 1; }
+            100% { width: 300px; height: 300px; opacity: 0; }
+        }
     </style>
 </head>
 <body>
     <div id="gameArea">Press Start to begin</div>
     <button id="startButton">Start Game</button>
     <div id="score">Score: 0</div>
-    <div id="sensitivityControl">
-        <label for="sensitivity">Shake Sensitivity:</label>
-        <input type="range" id="sensitivity" min="10" max="30" value="20">
-        <span id="sensitivityValue">20</span>
-    </div>
 
     <script>
-        // 保持之前的大部分代码不变，只修改 handleShake 函数和添加一些新变量
+        let tg;
+        let isTelegramWebAppAvailable = false;
 
-        let tg = window.Telegram.WebApp;
+        try {
+            tg = window.Telegram.WebApp;
+            isTelegramWebAppAvailable = true;
+            tg.ready();
+        } catch (error) {
+            console.log("Telegram WebApp is not available. Running in fallback mode.");
+        }
+
         let gameArea = document.getElementById('gameArea');
         let startButton = document.getElementById('startButton');
         let scoreDisplay = document.getElementById('score');
-        let sensitivitySlider = document.getElementById('sensitivity');
-        let sensitivityValue = document.getElementById('sensitivityValue');
         let score = 0;
         let isGameRunning = false;
-        let currentInterval = 1000;
-        let lastShakeTime = 0;
-        let vibrationPattern = [];
-        let patternIndex = 0;
-        let lastShakeMagnitude = 0;
-        let shakeThreshold = 20;
+        let vibrationInterval = 1000; // 1 second fixed interval
+        let lastVibrationTime = 0;
+        let isVibrating = false;
+        let gameTimer;
 
-        tg.expand();
+        function startGame() {
+            if (isGameRunning) return;
+            isGameRunning = true;
+            score = 0;
+            scoreDisplay.textContent = `Score: ${score}`;
+            gameArea.textContent = "Get ready...";
+            startButton.disabled = true;
+            
+            setTimeout(() => {
+                gameArea.textContent = "Shake when you see the circle!";
+                lastVibrationTime = Date.now();
+                gameTimer = setInterval(gameLoop, 100); // Check every 100ms
+            }, 2000);
+        }
 
-        // 保持其他函数不变: startGame, generateVibrationPattern, playVibrationPattern, endGame
+        function gameLoop() {
+            let currentTime = Date.now();
+            if (currentTime - lastVibrationTime >= vibrationInterval) {
+                vibrate();
+                showCircle();
+                lastVibrationTime = currentTime;
+                isVibrating = true;
+                setTimeout(() => {
+                    isVibrating = false;
+                }, 200); // Vibration duration
+            }
+        }
+
+        function vibrate() {
+            if (isTelegramWebAppAvailable && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+            console.log("Vibration triggered");
+        }
+
+        function showCircle() {
+            let circle = document.createElement('div');
+            circle.className = 'circle';
+            gameArea.appendChild(circle);
+            setTimeout(() => {
+                gameArea.removeChild(circle);
+            }, 500);
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            clearInterval(gameTimer);
+            gameArea.textContent = `Game Over! Your score: ${score}`;
+            startButton.disabled = false;
+        }
 
         function handleShake(event) {
             if (!isGameRunning) return;
 
             let acceleration = event.accelerationIncludingGravity;
             let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
-            
-            // 计算加速度变化
-            let shakeDelta = Math.abs(shakeMagnitude - lastShakeMagnitude);
-            lastShakeMagnitude = shakeMagnitude;
 
-            if (shakeDelta > shakeThreshold) {
-                let currentTime = Date.now();
-                let timeSinceLastVibration = currentTime - lastShakeTime;
-                
-                // 检查摇动是否在震动的200ms内发生
-                if (Math.abs(timeSinceLastVibration - currentInterval) < 200) {
+            if (shakeMagnitude > 20) { // You might need to adjust this threshold
+                if (isVibrating) {
                     score++;
-                    scoreDisplay.textContent = `Score: ${score}`;
-实现，    gameArea.textContent = `Good shake! Magnitude: ${shakeDelta.toFixed(2)}`;
+                    gameArea.textContent = "Good shake! +1";
                 } else {
-                    gameArea.textContent = `Try to match the vibration timing! Magnitude: ${shakeDelta.toFixed(2)}`;
+                    score = Math.max(0, score - 1); // Prevent negative scores
+                    gameArea.textContent = "Bad timing! -1";
                 }
+                scoreDisplay.textContent = `Score: ${score}`;
             }
         }
 
         startButton.addEventListener('click', startGame);
 
-        sensitivitySlider.addEventListener('input', function() {
-            shakeThreshold = this.value;
-            sensitivityValue.textContent = this.value;
-        });
-
-        if (window.DeviceMotionEvent) {
-            window.addEventListener('devicemotion', handleShake, false);
-        } else {
-            gameArea.textContent = "Device motion not supported on this device";
+        function requestMotionPermission() {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('devicemotion', handleShake, false);
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                window.addEventListener('devicemotion', handleShake, false);
+            }
         }
+
+        startButton.addEventListener('click', requestMotionPermission);
+
+        setTimeout(endGame, 30000);
     </script>
 </body>
 </html>
