@@ -201,11 +201,20 @@
         function drawAcceleration() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // Draw the center line
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.strokeStyle = '#cccccc';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Draw the acceleration graph
             ctx.beginPath();
             ctx.moveTo(0, canvas.height / 2);
 
             for (let i = 0; i < accelerationValues.length; i++) {
-                let y = canvas.height / 2 - (accelerationValues[i] * 10);
+                let y = canvas.height / 2 - (accelerationValues[i] * 5);
                 ctx.lineTo(i, y);
             }
 
@@ -215,10 +224,10 @@
 
             // Draw threshold lines
             ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2 - (shakeThreshold * 10));
-            ctx.lineTo(canvas.width, canvas.height / 2 - (shakeThreshold * 10));
-            ctx.moveTo(0, canvas.height / 2 + (shakeThreshold * 10));
-            ctx.lineTo(canvas.width, canvas.height / 2 + (shakeThreshold * 10));
+            ctx.moveTo(0, canvas.height / 2 - (shakeThreshold * 5));
+            ctx.lineTo(canvas.width, canvas.height / 2 - (shakeThreshold * 5));
+            ctx.moveTo(0, canvas.height / 2 + (shakeThreshold * 5));
+            ctx.lineTo(canvas.width, canvas.height / 2 + (shakeThreshold * 5));
             ctx.strokeStyle = 'red';
             ctx.lineWidth = 1;
             ctx.stroke();
@@ -261,6 +270,9 @@
                 accelerationValues.shift();
             }, 50);
         }
+
+        // Start drawing the acceleration graph immediately
+        requestAnimationFrame(drawAcceleration);
     </script>
 </body>
 </html>
