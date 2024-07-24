@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Improved Vertical Shake Detection Game</title>
+    <title>Rhythm-based Shake Detection Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -30,6 +30,15 @@
             text-align: center;
             position: relative;
             overflow: hidden;
+        }
+        #shakeIndicator {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #3390ec;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.1s ease-in-out;
         }
         button {
             padding: 10px 20px;
@@ -69,7 +78,10 @@
     </style>
 </head>
 <body>
-    <div id="gameArea">Press Start to begin</div>
+    <div id="gameArea">
+        Press Start to begin
+        <div id="shakeIndicator"></div>
+    </div>
     <div id="controls">
         <div>
             <label for="sensitivity">Shake Sensitivity:</label>
@@ -85,6 +97,7 @@
     <script>
         let tg = window.Telegram?.WebApp;
         let gameArea = document.getElementById('gameArea');
+        let shakeIndicator = document.getElementById('shakeIndicator');
         let startButton = document.getElementById('startButton');
         let shakeButton = document.getElementById('shakeButton');
         let scoreDisplay = document.getElementById('score');
@@ -100,6 +113,12 @@
         let accelerationValues = new Array(300).fill(0);
         let accelerationWindow = new Array(10).fill(0);
         let lastShakeTime = 0;
+
+        let shakeWindowStart = 0;
+        let shakeWindowDuration = 400; // 400ms window for shaking
+        let gameInterval;
+        let hasShaken = false;
+        let hasMissed = false;
 
         // Set canvas size
         canvas.width = 300;
@@ -118,18 +137,47 @@
             }
             
             setTimeout(() => {
-                gameArea.textContent = isDesktop ? "Click 'Shake!' when you see the circle!" : "Shake when you see the circle!";
+                gameArea.textContent = "Shake when the indicator lights up!";
                 requestAnimationFrame(drawAcceleration);
+                startGameLoop();
             }, 2000);
+        }
+
+        function startGameLoop() {
+            gameInterval = setInterval(() => {
+                shakeWindowStart = Date.now();
+                shakeIndicator.style.opacity = 1;
+                setTimeout(() => {
+                    shakeIndicator.style.opacity = 0;
+                }, 200); // Indicator visible for 200ms
+
+                setTimeout(() => {
+                    if (!hasShaken && !hasMissed) {
+                        updateScore(-1);
+                        gameArea.textContent = "Missed! -1";
+                        hasMissed = true;
+                    }
+                    hasShaken = false;
+                    hasMissed = false;
+                }, shakeWindowDuration);
+            }, 1000);
         }
 
         function handleShake() {
             if (!isGameRunning) return;
             let currentTime = Date.now();
-            if (currentTime - lastShakeTime > 500) {  // Prevent multiple triggers in short succession
-                updateScore(1);
-                gameArea.textContent = "Good shake! +1";
-                lastShakeTime = currentTime;
+            if (currentTime - shakeWindowStart <= shakeWindowDuration) {
+                if (!hasShaken) {
+                    updateScore(1);
+                    gameArea.textContent = "Good shake! +1";
+                    hasShaken = true;
+                }
+            } else {
+                if (!hasMissed) {
+                    updateScore(-1);
+                    gameArea.textContent = "Wrong timing! -1";
+                    hasMissed = true;
+                }
             }
         }
 
