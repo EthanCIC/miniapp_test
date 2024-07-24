@@ -22,7 +22,7 @@
         #scoreDisplay {
             font-size: 48px;
             font-weight: bold;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         #gameArea {
             width: 300px;
@@ -78,6 +78,15 @@
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
         }
+        #feverCountdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 120px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.7);
+        }
         #actionButton {
             margin-top: 20px;
             padding: 10px 20px;
@@ -96,26 +105,17 @@
             background-color: #7a7a7a;
             cursor: not-allowed;
         }
-        .shake {
-            animation: shake 0.5s infinite;
-        }
-        @keyframes shake {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            25% { transform: translate(-50%, -50%) rotate(5deg); }
-            50% { transform: translate(-50%, -50%) rotate(0deg); }
-            75% { transform: translate(-50%, -50%) rotate(-5deg); }
-            100% { transform: translate(-50%, -50%) rotate(0deg); }
-        }
     </style>
 </head>
 <body>
+    <div id="scoreDisplay">Score: 0</div>
     <div id="gameArea">
         <div id="timeWindow"></div>
         <div id="circle"></div>
         <div id="feedback"></div>
         <div id="feverMode">FEVER!</div>
+        <div id="feverCountdown"></div>
     </div>
-    <div id="scoreDisplay">Score: 0</div>
     <button id="actionButton">Start</button>
 
     <script>
@@ -127,6 +127,7 @@
         let actionButton = document.getElementById('actionButton');
         let scoreDisplay = document.getElementById('scoreDisplay');
         let feverModeDisplay = document.getElementById('feverMode');
+        let feverCountdown = document.getElementById('feverCountdown');
         let score = 0;
         let isGameRunning = false;
         let circleSize = 280;
@@ -140,6 +141,7 @@
         let isInTimeWindow = false;
         let isFeverMode = false;
         let feverModeTimer;
+        let feverCountdownInterval;
         let currentCycleScoreChanged = false;
 
         function startGame() {
@@ -286,7 +288,18 @@
             feverModeDisplay.style.opacity = 1;
             circle.style.display = 'none';
             timeWindow.style.display = 'none';
-            feverModeDisplay.classList.add('shake');
+            
+            let countdownTime = 10;
+            feverCountdown.textContent = countdownTime;
+            feverCountdown.style.display = 'block';
+            
+            feverCountdownInterval = setInterval(() => {
+                countdownTime--;
+                feverCountdown.textContent = countdownTime;
+                if (countdownTime <= 0) {
+                    clearInterval(feverCountdownInterval);
+                }
+            }, 1000);
 
             feverModeTimer = setTimeout(() => {
                 endFeverMode();
@@ -296,8 +309,11 @@
         function endFeverMode() {
             isFeverMode = false;
             feverModeDisplay.style.opacity = 0;
-            feverModeDisplay.classList.remove('shake');
-            clearInterval(shrinkInterval);
+            feverCountdown.style.display = 'none';
+            clearInterval(feverCountdownInterval);
+            clearTimeout(feverModeTimer);
+            circle.style.display = 'block';
+            timeWindow.style.display = 'block';
             endGame();
         }
 
@@ -311,6 +327,7 @@
                 // If the game is running, restart it
                 clearInterval(shrinkInterval);
                 clearTimeout(feverModeTimer);
+                clearInterval(feverCountdownInterval);
                 endGame();
             }
             startGame();
