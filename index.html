@@ -1,16 +1,87 @@
 <!DOCTYPE html>
-   <html lang="en">
-   <head>
-       <meta charset="UTF-8">
-       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <title>My Telegram Mini App</title>
-       <script src="https://telegram.org/js/telegram-web-app.js"></script>
-   </head>
-   <body>
-       <h1>Welcome to My Telegram Mini App</h1>
-       <p>This is a basic setup for a Telegram Mini App.</p>
-       <script>
-           window.Telegram.WebApp.ready();
-       </script>
-   </body>
-   </html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Telegram Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            color: var(--tg-theme-text-color, #000);
+            background-color: var(--tg-theme-bg-color, #fff);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #clickArea {
+            width: 200px;
+            height: 200px;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s;
+        }
+        .pulse {
+            animation: pulse 0.5s;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="clickArea">Click me!</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const clickArea = document.getElementById('clickArea');
+
+            function isTelegramWebAppAvailable() {
+                return window.Telegram && window.Telegram.WebApp;
+            }
+
+            function handleClick() {
+                // 添加动效
+                clickArea.classList.add('pulse');
+                setTimeout(() => {
+                    clickArea.classList.remove('pulse');
+                }, 500);
+
+                // 如果在 Telegram 环境中，触发震动和发送数据
+                if (isTelegramWebAppAvailable()) {
+                    const tg = window.Telegram.WebApp;
+                    
+                    // 触发震动
+                    if (tg.HapticFeedback) {
+                        tg.HapticFeedback.impactOccurred('medium');
+                    }
+
+                    // 向 bot 发送数据
+                    tg.sendData("User clicked the area");
+                } else {
+                    console.log("Telegram WebApp is not available. Running in browser mode.");
+                }
+            }
+
+            clickArea.addEventListener('click', handleClick);
+
+            // 如果在 Telegram 环境中，扩展视图
+            if (isTelegramWebAppAvailable()) {
+                const tg = window.Telegram.WebApp;
+                tg.expand();
+                tg.ready();
+            }
+        });
+    </script>
+</body>
+</html>
