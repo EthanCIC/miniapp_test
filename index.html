@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vertical Shake Match Game with Visualization</title>
+    <title>Vertical Shake Match Game with Improved Detection</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -183,12 +183,17 @@
                     }
                     break;
                 case 'moving_down':
+                    if (Math.abs(accelerationChange) < shakeThreshold / 2) {
+                        shakeState = 'center_from_down';
+                    }
+                    break;
+                case 'center_from_down':
                     if (accelerationChange > shakeThreshold) {
                         shakeState = 'moving_up';
                     }
                     break;
                 case 'moving_up':
-                    if (accelerationChange < 0) {
+                    if (Math.abs(accelerationChange) < shakeThreshold / 2) {
                         handleShake();
                         shakeState = 'idle';
                     }
@@ -231,6 +236,11 @@
             ctx.strokeStyle = 'red';
             ctx.lineWidth = 1;
             ctx.stroke();
+
+            // Draw shake state
+            ctx.fillStyle = 'black';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Shake State: ${shakeState}`, 10, 20);
 
             requestAnimationFrame(drawAcceleration);
         }
