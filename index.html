@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Natural Shake Motion Game</title>
+    <title>Improved Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -31,15 +31,20 @@
             position: relative;
             overflow: hidden;
         }
-        #startButton {
+        #startButton, #shakeButton {
             padding: 10px 20px;
             font-size: 18px;
             background-color: var(--tg-theme-button-color, #3390ec);
             color: var(--tg-theme-button-text-color, #ffffff);
             border: none;
             cursor: pointer;
+            margin: 10px;
         }
-        #score {
+        #startButton:disabled, #shakeButton:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #score, #debug {
             font-size: 20px;
             margin-top: 20px;
         }
@@ -63,22 +68,33 @@
 <body>
     <div id="gameArea">Press Start to begin</div>
     <button id="startButton">Start Game</button>
+    <button id="shakeButton" style="display: none;">Shake!</button>
     <div id="score">Score: 0</div>
+    <div id="debug">Debug info will appear here</div>
 
     <script>
         let tg;
         let isTelegramWebAppAvailable = false;
+        let debugArea = document.getElementById('debug');
+        let isDesktop = !('ontouchstart' in window);
+
+        function log(message) {
+            console.log(message);
+            debugArea.textContent += message + '\n';
+        }
 
         try {
             tg = window.Telegram.WebApp;
             isTelegramWebAppAvailable = true;
             tg.ready();
+            log("Telegram WebApp initialized successfully");
         } catch (error) {
-            console.log("Telegram WebApp is not available. Running in fallback mode.");
+            log("Error initializing Telegram WebApp: " + error.message);
         }
 
         let gameArea = document.getElementById('gameArea');
         let startButton = document.getElementById('startButton');
+        let shakeButton = document.getElementById('shakeButton');
         let scoreDisplay = document.getElementById('score');
         let score = 0;
         let isGameRunning = false;
@@ -88,20 +104,30 @@
         let gameTimer;
         let canScore = false;
         let lastShakeTime = 0;
-        let shakeThreshold = 15; // 调整这个值来改变摇动的灵敏度
+        let shakeThreshold = 15;
 
         function startGame() {
-            if (isGameRunning) return;
+            log("Start Game button clicked");
+            if (isGameRunning) {
+                log("Game is already running");
+                return;
+            }
             isGameRunning = true;
             score = 0;
             scoreDisplay.textContent = `Score: ${score}`;
             gameArea.textContent = "Get ready...";
             startButton.disabled = true;
+            if (isDesktop) {
+                shakeButton.style.display = 'block';
+                shakeButton.disabled = false;
+            }
             
+            log("Starting game in 2 seconds");
             setTimeout(() => {
-                gameArea.textContent = "Shake when you see the circle!";
+                gameArea.textContent = isDesktop ? "Click 'Shake!' when you see the circle!" : "Shake when you see the circle!";
                 lastVibrationTime = Date.now();
-                gameTimer = setInterval(gameLoop, 100); // Check every 100ms
+                gameTimer = setInterval(gameLoop, 100);
+                log("Game loop started");
             }, 2000);
         }
 
@@ -113,17 +139,21 @@
                 lastVibrationTime = currentTime;
                 isVibrating = true;
                 canScore = true;
+                log("Vibration and circle triggered");
                 setTimeout(() => {
                     isVibrating = false;
-                }, 200); // Vibration duration
+                    log("Vibration ended");
+                }, 200);
             }
         }
 
         function vibrate() {
             if (isTelegramWebAppAvailable && tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('error'); // 最强震动
+                tg.HapticFeedback.notificationOccurred('error');
+                log("Vibration triggered via Telegram WebApp");
+            } else {
+                log("Vibration not available");
             }
-            console.log("Vibration triggered");
         }
 
         function showCircle() {
@@ -133,6 +163,7 @@
             setTimeout(() => {
                 gameArea.removeChild(circle);
             }, 500);
+            log("Circle shown and removed");
         }
 
         function endGame() {
@@ -140,48 +171,85 @@
             clearInterval(gameTimer);
             gameArea.textContent = `Game Over! Your score: ${score}`;
             startButton.disabled = false;
+            if (isDesktop) {
+                shakeButton.style.display = 'none';
+            }
+            log("Game ended");
         }
 
-        function handleShake(event) {
+        function handleShake() {
             if (!isGameRunning) return;
 
-            let acceleration = event.accelerationIncludingGravity;
-            let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
             let currentTime = Date.now();
 
-            if (shakeMagnitude > shakeThreshold && currentTime - lastShakeTime > 200) {
+            if (currentTime - lastShakeTime > 200) {
                 lastShakeTime = currentTime;
+                log(`Shake detected`);
                 if (isVibrating && canScore) {
                     score++;
                     canScore = false;
                     gameArea.textContent = "Good shake! +1";
+                    log("Score increased: " + score);
                 } else if (!isVibrating) {
-                    score = Math.max(0, score - 1); // Prevent negative scores
+                    score = Math.max(0, score - 1);
                     gameArea.textContent = "Bad timing! -1";
+                    log("Score decreased: " + score);
                 }
                 scoreDisplay.textContent = `Score: ${score}`;
             }
         }
 
-        startButton.addEventListener('click', startGame);
+        startButton.addEventListener('click', () => {
+            log("Start button clicked");
+            if (isDesktop) {
+                startGame();
+            } else {
+                requestMotionPermission();
+            }
+        });
+
+        shakeButton.addEventListener('click', handleShake);
 
         function requestMotionPermission() {
             if (typeof DeviceMotionEvent.requestPermission === 'function') {
-实现，DeviceMotionEvent.requestPermission()
+                DeviceMotionEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
-                            window.addEventListener('devicemotion', handleShake, false);
+                            window.addEventListener('devicemotion', handleShakeMotion, false);
+                            log("Motion permission granted");
+                            startGame();
+                        } else {
+                            log("Motion permission denied");
                         }
                     })
-                    .catch(console.error);
+                    .catch(error => {
+                        log("Error requesting motion permission: " + error.message);
+                    });
             } else {
-                window.addEventListener('devicemotion', handleShake, false);
+                window.addEventListener('devicemotion', handleShakeMotion, false);
+                log("Motion listener added without permission request");
+                startGame();
             }
         }
 
-        startButton.addEventListener('click', requestMotionPermission);
+        function handleShakeMotion(event) {
+            if (!isGameRunning) return;
 
-        setTimeout(endGame, 30000);
+            let acceleration = event.accelerationIncludingGravity;
+            let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
+
+            if (shakeMagnitude > shakeThreshold) {
+                handleShake();
+            }
+        }
+
+        setTimeout(() => {
+            if (isGameRunning) {
+                endGame();
+            } else {
+                log("Game did not start within 30 seconds");
+            }
+        }, 30000);
     </script>
 </body>
 </html>
