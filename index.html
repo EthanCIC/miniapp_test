@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Improved Shake Match Game</title>
+    <title>Dynamic Interval Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -114,7 +114,8 @@
         let lastAcceleration = 0;
         let shakeState = 'idle';
         let lastDirectionChangeTime = 0;
-        const MIN_SHAKE_INTERVAL = 300;
+        let minShakeInterval = 300;
+        const MIN_POSSIBLE_INTERVAL = 100;
 
         if (tg) {
             tg.ready();
@@ -127,6 +128,7 @@
             isGameRunning = true;
             score = 0;
             vibrationInterval = baseVibrationInterval;
+            minShakeInterval = 300;
             scoreDisplay.textContent = `Score: ${score}`;
             gameArea.textContent = "Get ready...";
             startButton.disabled = true;
@@ -192,7 +194,7 @@
 
             let currentTime = Date.now();
 
-            if (currentTime - lastShakeTime > MIN_SHAKE_INTERVAL) {
+            if (currentTime - lastShakeTime > minShakeInterval) {
                 lastShakeTime = currentTime;
                 if (isVibrating && canScore) {
                     updateScore(1);
@@ -212,8 +214,9 @@
         }
 
         function updateVibrationInterval() {
-            vibrationInterval = Math.max(300, baseVibrationInterval - (score * 50));
-            console.log(`New vibration interval: ${vibrationInterval}ms`);
+            vibrationInterval = Math.max(MIN_POSSIBLE_INTERVAL, baseVibrationInterval - (score * 50));
+            minShakeInterval = Math.max(MIN_POSSIBLE_INTERVAL, 300 - (score * 10));
+            console.log(`New vibration interval: ${vibrationInterval}ms, Min shake interval: ${minShakeInterval}ms`);
         }
 
         startButton.addEventListener('click', () => {
@@ -233,7 +236,7 @@
                         if (permissionState === 'granted') {
                             window.addEventListener('devicemotion', handleShakeMotion, false);
                             startGame();
-                        }
+        实现，    }
                     })
                     .catch(console.error);
             } else {
@@ -249,7 +252,7 @@
             let accelerationChange = acceleration - lastAcceleration;
             let currentTime = Date.now();
             
-            debugArea.textContent = `Accel: ${acceleration.toFixed(2)}, Change: ${accelerationChange.toFixed(2)}, Threshold: ${shakeThreshold.toFixed(2)}, State: ${shakeState}`;
+            debugArea.textContent = `Accel: ${acceleration.toFixed(2)}, Change: ${accelerationChange.toFixed(2)}, Threshold: ${shakeThreshold.toFixed(2)}, State: ${shakeState}, Interval: ${vibrationInterval}ms, Min Shake: ${minShakeInterval}ms`;
 
             switch (shakeState) {
                 case 'idle':
@@ -265,7 +268,7 @@
                     }
                     break;
                 case 'moving_up':
-                    if (currentTime - lastDirectionChangeTime > MIN_SHAKE_INTERVAL) {
+                    if (currentTime - lastDirectionChangeTime > minShakeInterval) {
                         handleShake();
                         shakeState = 'idle';
                     } else if (accelerationChange < -shakeThreshold) {
