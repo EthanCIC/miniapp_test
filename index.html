@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Interval Shake Match Game</title>
+    <title>Debug: Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -74,6 +74,13 @@
             margin-bottom: 10px;
             width: 100%;
         }
+        #debug {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -117,14 +124,25 @@
         let minShakeInterval = 300;
         const MIN_POSSIBLE_INTERVAL = 100;
 
+        function log(message) {
+            console.log(message);
+            debugArea.innerHTML += message + '<br>';
+            debugArea.scrollTop = debugArea.scrollHeight;
+        }
+
         if (tg) {
             tg.ready();
+            log("Telegram WebApp initialized");
         } else {
-            console.log("Telegram WebApp is not available. Running in standalone mode.");
+            log("Telegram WebApp is not available. Running in standalone mode.");
         }
 
         function startGame() {
-            if (isGameRunning) return;
+            log("Start Game function called");
+            if (isGameRunning) {
+                log("Game is already running");
+                return;
+            }
             isGameRunning = true;
             score = 0;
             vibrationInterval = baseVibrationInterval;
@@ -137,10 +155,12 @@
                 shakeButton.disabled = false;
             }
             
+            log("Starting game in 2 seconds");
             setTimeout(() => {
                 gameArea.textContent = isDesktop ? "Click 'Shake!' when you see the circle!" : "Shake when you see the circle!";
                 lastVibrationTime = Date.now();
                 gameTimer = setInterval(gameLoop, 100);
+                log("Game loop started");
             }, 2000);
         }
 
@@ -166,8 +186,10 @@
         function vibrate() {
             if (tg?.HapticFeedback) {
                 tg.HapticFeedback.impactOccurred('heavy');
+                log("Vibration triggered");
+            } else {
+                log("Vibration not available");
             }
-            console.log("Strong vibration triggered");
         }
 
         function showCircle() {
@@ -177,6 +199,7 @@
             setTimeout(() => {
                 gameArea.removeChild(circle);
             }, 500);
+            log("Circle shown");
         }
 
         function endGame() {
@@ -187,6 +210,7 @@
             if (isDesktop) {
                 shakeButton.style.display = 'none';
             }
+            log("Game ended");
         }
 
         function handleShake() {
@@ -200,9 +224,11 @@
                     updateScore(1);
                     canScore = false;
                     gameArea.textContent = "Good shake! +1";
+                    log("Good shake: +1 point");
                 } else if (!isVibrating) {
                     updateScore(-1);
                     gameArea.textContent = "Bad timing! -1";
+                    log("Bad timing: -1 point");
                 }
             }
         }
@@ -216,10 +242,11 @@
         function updateVibrationInterval() {
             vibrationInterval = Math.max(MIN_POSSIBLE_INTERVAL, baseVibrationInterval - (score * 50));
             minShakeInterval = Math.max(MIN_POSSIBLE_INTERVAL, 300 - (score * 10));
-            console.log(`New vibration interval: ${vibrationInterval}ms, Min shake interval: ${minShakeInterval}ms`);
+            log(`New vibration interval: ${vibrationInterval}ms, Min shake interval: ${minShakeInterval}ms`);
         }
 
         startButton.addEventListener('click', () => {
+            log("Start button clicked");
             if (isDesktop) {
                 startGame();
             } else {
@@ -230,16 +257,23 @@
         shakeButton.addEventListener('click', handleShake);
 
         function requestMotionPermission() {
+            log("Requesting motion permission");
             if (typeof DeviceMotionEvent?.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
+                            log("Motion permission granted");
                             window.addEventListener('devicemotion', handleShakeMotion, false);
                             startGame();
-        实现，    }
+                        } else {
+                            log("Motion permission denied");
+                        }
                     })
-                    .catch(console.error);
+                    .catch(error => {
+                        log("Error requesting motion permission: " + error.message);
+                    });
             } else {
+                log("DeviceMotionEvent.requestPermission is not available");
                 window.addEventListener('devicemotion', handleShakeMotion, false);
                 startGame();
             }
@@ -252,28 +286,32 @@
             let accelerationChange = acceleration - lastAcceleration;
             let currentTime = Date.now();
             
-            debugArea.textContent = `Accel: ${acceleration.toFixed(2)}, Change: ${accelerationChange.toFixed(2)}, Threshold: ${shakeThreshold.toFixed(2)}, State: ${shakeState}, Interval: ${vibrationInterval}ms, Min Shake: ${minShakeInterval}ms`;
+            log(`Accel: ${acceleration.toFixed(2)}, Change: ${accelerationChange.toFixed(2)}, Threshold: ${shakeThreshold.toFixed(2)}, State: ${shakeState}`);
 
             switch (shakeState) {
                 case 'idle':
                     if (accelerationChange < -shakeThreshold) {
                         shakeState = 'moving_down';
                         lastDirectionChangeTime = currentTime;
+                        log("Moving down");
                     }
                     break;
                 case 'moving_down':
                     if (accelerationChange > shakeThreshold) {
                         shakeState = 'moving_up';
                         lastDirectionChangeTime = currentTime;
+                        log("Moving up");
                     }
                     break;
                 case 'moving_up':
                     if (currentTime - lastDirectionChangeTime > minShakeInterval) {
                         handleShake();
                         shakeState = 'idle';
+                        log("Shake detected");
                     } else if (accelerationChange < -shakeThreshold) {
                         shakeState = 'moving_down';
                         lastDirectionChangeTime = currentTime;
+                        log("Moving down (reset)");
                     }
                     break;
             }
@@ -284,10 +322,14 @@
         sensitivitySlider.addEventListener('input', function() {
             shakeThreshold = (30 - this.value) / 5;
             sensitivityValue.textContent = this.value;
-            debugArea.textContent = `Shake threshold set to: ${shakeThreshold.toFixed(2)}`;
+            log(`Shake threshold set to: ${shakeThreshold.toFixed(2)}`);
         });
 
         setTimeout(endGame, 30000);
+
+        window.onerror = function(message, source, lineno, colno, error) {
+            log("JavaScript error: " + message + " at line " + lineno);
+        };
     </script>
 </body>
 </html>
