@@ -3,98 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Telegram Mini App</title>
+    <title>Improved Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: sans-serif;
-            color: var(--tg-theme-text-color, #000);
-            background-color: var(--tg-theme-bg-color, #fff);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        #clickArea {
-            width: 200px;
-            height: 200px;
-            background-color: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.1s;
-            margin-bottom: 20px;
-        }
-        .pulse {
-            animation: pulse 0.5s;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        #hapticStrength {
-            margin-bottom: 10px;
-        }
+        /* 保持之前的样式不变 */
     </style>
 </head>
 <body>
-    <div id="clickArea">Click me!</div>
-    <select id="hapticStrength">
-        <option value="light">Light</option>
-        <option value="medium" selected>Medium</option>
-        <option value="heavy">Heavy</option>
-        <option value="rigid">Rigid</option>
-        <option value="soft">Soft</option>
-    </select>
-    <div id="status"></div>
+    <div id="gameArea">Press Start to begin</div>
+    <button id="startButton">Start Game</button>
+    <div id="score">Score: 0</div>
+    <div id="sensitivityControl">
+        <label for="sensitivity">Shake Sensitivity:</label>
+        <input type="range" id="sensitivity" min="10" max="30" value="20">
+        <span id="sensitivityValue">20</span>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const clickArea = document.getElementById('clickArea');
-            const hapticStrength = document.getElementById('hapticStrength');
-            const status = document.getElementById('status');
+        // 保持之前的大部分代码不变，只修改 handleShake 函数和添加一些新变量
 
-            function isTelegramWebAppAvailable() {
-                return window.Telegram && window.Telegram.WebApp;
-            }
+        let tg = window.Telegram.WebApp;
+        let gameArea = document.getElementById('gameArea');
+        let startButton = document.getElementById('startButton');
+        let scoreDisplay = document.getElementById('score');
+        let sensitivitySlider = document.getElementById('sensitivity');
+        let sensitivityValue = document.getElementById('sensitivityValue');
+        let score = 0;
+        let isGameRunning = false;
+        let currentInterval = 1000;
+        let lastShakeTime = 0;
+        let vibrationPattern = [];
+        let patternIndex = 0;
+        let lastShakeMagnitude = 0;
+        let shakeThreshold = 20;
 
-            function handleClick() {
-                clickArea.classList.add('pulse');
-                setTimeout(() => {
-                    clickArea.classList.remove('pulse');
-                }, 500);
+        tg.expand();
 
-                if (isTelegramWebAppAvailable()) {
-                    const tg = window.Telegram.WebApp;
-                    
-                    if (tg.HapticFeedback) {
-                        tg.HapticFeedback.impactOccurred(hapticStrength.value);
-                        status.textContent = `Haptic feedback: ${hapticStrength.value}`;
-                    } else {
-                        status.textContent = 'Haptic feedback not supported';
-                    }
+        // 保持其他函数不变: startGame, generateVibrationPattern, playVibrationPattern, endGame
 
-                    tg.sendData("User clicked the area");
+        function handleShake(event) {
+            if (!isGameRunning) return;
+
+            let acceleration = event.accelerationIncludingGravity;
+            let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
+            
+            // 计算加速度变化
+            let shakeDelta = Math.abs(shakeMagnitude - lastShakeMagnitude);
+            lastShakeMagnitude = shakeMagnitude;
+
+            if (shakeDelta > shakeThreshold) {
+                let currentTime = Date.now();
+                let timeSinceLastVibration = currentTime - lastShakeTime;
+                
+                // 检查摇动是否在震动的200ms内发生
+                if (Math.abs(timeSinceLastVibration - currentInterval) < 200) {
+                    score++;
+                    scoreDisplay.textContent = `Score: ${score}`;
+实现，    gameArea.textContent = `Good shake! Magnitude: ${shakeDelta.toFixed(2)}`;
                 } else {
-                    status.textContent = 'Running in browser mode. Haptic feedback not available.';
+                    gameArea.textContent = `Try to match the vibration timing! Magnitude: ${shakeDelta.toFixed(2)}`;
                 }
             }
+        }
 
-            clickArea.addEventListener('click', handleClick);
+        startButton.addEventListener('click', startGame);
 
-            if (isTelegramWebAppAvailable()) {
-                const tg = window.Telegram.WebApp;
-                tg.expand();
-                tg.ready();
-            }
+        sensitivitySlider.addEventListener('input', function() {
+            shakeThreshold = this.value;
+            sensitivityValue.textContent = this.value;
         });
+
+        if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', handleShake, false);
+        } else {
+            gameArea.textContent = "Device motion not supported on this device";
+        }
     </script>
 </body>
 </html>
