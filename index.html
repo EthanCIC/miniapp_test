@@ -272,7 +272,9 @@
                 if (tg?.HapticFeedback) {
                     tg.HapticFeedback.impactOccurred('medium');
                 }
-            }, 200);  // 保持震动频率为每 200 毫秒一次，但不影响 shake 检测
+            }, 200); // 保持震动频率为每 200 毫秒一次，但不影响 shake 检测
+
+            minShakeInterval = 100; // 放宽 FEVER 模式下的 shake 条件
         }
 
         function endFeverMode() {
@@ -283,6 +285,7 @@
             lastVibrationTime = Date.now();
             gameTimer = setInterval(gameLoop, 100);
             updateVibrationInterval();
+            minShakeInterval = 300; // 恢复正常模式下的 shake 条件
         }
 
         startButton.addEventListener('click', () => {
