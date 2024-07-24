@@ -31,7 +31,16 @@
             transform: translate(-50%, -50%);
             border: 2px solid #00ff00;
             border-radius: 50%;
-            transition: all 0.1s linear;
+            transition: all 0.05s linear;
+        }
+        #feedback {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.1s ease-in-out;
         }
         #score {
             color: #fff;
@@ -51,19 +60,22 @@
 <body>
     <div id="gameArea">
         <div id="circle"></div>
+        <div id="feedback"></div>
         <div id="score">Score: 0</div>
     </div>
     <button id="startButton">Start Game</button>
 
     <script>
+        let tg = window.Telegram.WebApp;
         let gameArea = document.getElementById('gameArea');
         let circle = document.getElementById('circle');
+        let feedback = document.getElementById('feedback');
         let startButton = document.getElementById('startButton');
         let scoreDisplay = document.getElementById('score');
         let score = 0;
         let isGameRunning = false;
         let circleSize = 280;
-        let shrinkSpeed = 2;
+        let shrinkSpeed = 5;
         let shrinkInterval;
         let shakeThreshold = 15;
         let lastShakeTime = 0;
@@ -147,17 +159,21 @@
         function checkShakeTiming() {
             if (circleSize <= perfectShakeWindow) {
                 updateScore(1);
-                circle.style.backgroundColor = '#00ff00';
-                setTimeout(() => {
-                    circle.style.backgroundColor = 'transparent';
-                }, 100);
+                showFeedback('#00ff00');
+                tg.HapticFeedback.impactOccurred('light');
             } else {
                 updateScore(-1);
-                circle.style.backgroundColor = '#ff0000';
-                setTimeout(() => {
-                    circle.style.backgroundColor = 'transparent';
-                }, 100);
+                showFeedback('#ff0000');
+                tg.HapticFeedback.notificationOccurred('error');
             }
+        }
+
+        function showFeedback(color) {
+            feedback.style.backgroundColor = color;
+            feedback.style.opacity = 0.5;
+            setTimeout(() => {
+                feedback.style.opacity = 0;
+            }, 100);
         }
 
         function updateScore(change = 0) {
@@ -166,9 +182,7 @@
         }
 
         function vibrateDevice() {
-            if ('vibrate' in navigator) {
-                navigator.vibrate(200); // Vibrate for 200ms
-            }
+            tg.HapticFeedback.impactOccurred('heavy');
         }
 
         startButton.addEventListener('click', startGame);
