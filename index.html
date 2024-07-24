@@ -99,6 +99,7 @@
         let lastShakeTime = 0;
         let accelerationWindow = [];
         let perfectShakeWindow = 50; // ms
+        let pointDeducted = false;
 
         function startGame() {
             if (isGameRunning) return;
@@ -151,13 +152,19 @@
         function startShrinking() {
             circleSize = 280;
             updateCircleSize();
+            pointDeducted = false;
             shrinkInterval = setInterval(() => {
                 circleSize -= shrinkSpeed;
                 if (circleSize <= 0) {
+                    if (!pointDeducted) {
+                        updateScore(-1);
+                        showFeedback('#f44336');
+                    }
                     vibrateDevice();
                     setTimeout(() => {
                         circleSize = 280;
                         updateShrinkSpeed();
+                        pointDeducted = false;
                     }, 200); // Wait for 200ms before resetting
                 }
                 updateCircleSize();
@@ -173,9 +180,11 @@
             if (circleSize <= perfectShakeWindow) {
                 updateScore(1);
                 showFeedback('#4caf50');
-            } else {
+                pointDeducted = true;
+            } else if (!pointDeducted) {
                 updateScore(-1);
                 showFeedback('#f44336');
+                pointDeducted = true;
             }
         }
 
@@ -194,7 +203,8 @@
         }
 
         function updateShrinkSpeed() {
-            shrinkSpeed = baseShrinkSpeed + (score * 0.1);
+            shrinkSpeed = baseShrinkSpeed + (score * 0.2); // Increased speed multiplier
+            perfectShakeWindow = Math.max(10, 50 - score); // Decrease perfect window with score, minimum 10ms
         }
 
         function vibrateDevice() {
