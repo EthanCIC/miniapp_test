@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circle Shrink Shake Game with FEVER Mode</title>
+    <title>Circle Shrink Shake Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -11,16 +11,18 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: space-between;
             height: 100vh;
             margin: 0;
             background-color: #1a1a2e;
             color: #ffffff;
+            padding: 20px;
+            box-sizing: border-box;
         }
         #scoreDisplay {
             font-size: 48px;
             font-weight: bold;
-            margin: 20px 0;
+            margin-bottom: 20px;
         }
         #gameArea {
             width: 300px;
@@ -75,7 +77,7 @@
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
         }
-        #startButton, #restartButton {
+        #actionButton {
             margin-top: 20px;
             padding: 10px 20px;
             font-size: 18px;
@@ -86,36 +88,12 @@
             border-radius: 5px;
             transition: background-color 0.3s ease;
         }
-        #startButton:hover, #restartButton:hover {
+        #actionButton:hover {
             background-color: #d13551;
         }
-        #startButton:disabled, #restartButton:disabled {
+        #actionButton:disabled {
             background-color: #7a7a7a;
             cursor: not-allowed;
-        }
-        #gameOverScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease-in-out;
-        }
-        #gameOverScreen.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        #finalScore {
-            font-size: 64px;
-            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -127,11 +105,7 @@
         <div id="feedback"></div>
         <div id="feverMode">FEVER!</div>
     </div>
-    <button id="startButton">Start Game</button>
-    <div id="gameOverScreen">
-        <div id="finalScore">Final Score: 0</div>
-        <button id="restartButton">Play Again</button>
-    </div>
+    <button id="actionButton">Start</button>
 
     <script>
         let tg = window.Telegram.WebApp;
@@ -139,12 +113,9 @@
         let circle = document.getElementById('circle');
         let timeWindow = document.getElementById('timeWindow');
         let feedback = document.getElementById('feedback');
-        let startButton = document.getElementById('startButton');
-        let restartButton = document.getElementById('restartButton');
+        let actionButton = document.getElementById('actionButton');
         let scoreDisplay = document.getElementById('scoreDisplay');
         let feverModeDisplay = document.getElementById('feverMode');
-        let gameOverScreen = document.getElementById('gameOverScreen');
-        let finalScoreDisplay = document.getElementById('finalScore');
         let score = 0;
         let isGameRunning = false;
         let circleSize = 280;
@@ -165,7 +136,7 @@
             isGameRunning = true;
             score = 0;
             updateScore();
-            startButton.disabled = true;
+            actionButton.textContent = 'Restart';
             requestMotionPermission();
             startShrinking();
         }
@@ -319,19 +290,20 @@
 
         function endGame() {
             isGameRunning = false;
-            finalScoreDisplay.textContent = `Final Score: ${score}`;
-            gameOverScreen.classList.add('active');
+            actionButton.textContent = 'Play Again';
         }
 
-        function restartGame() {
-            gameOverScreen.classList.remove('active');
-            circle.style.display = 'block';
-            timeWindow.style.display = 'block';
+        function handleActionButton() {
+            if (isGameRunning) {
+                // If the game is running, restart it
+                clearInterval(shrinkInterval);
+                clearTimeout(feverModeTimer);
+                endGame();
+            }
             startGame();
         }
 
-        startButton.addEventListener('click', startGame);
-        restartButton.addEventListener('click', restartGame);
+        actionButton.addEventListener('click', handleActionButton);
     </script>
 </body>
 </html>
