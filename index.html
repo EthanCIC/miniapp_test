@@ -137,6 +137,8 @@
         let isFeverMode = false;
         let feverTimer;
         let feverVibrationTimer;
+        let lastFeverShakeTime = 0;
+        let feverScoreMultiplier = 1;
 
         if (tg) tg.ready();
 
@@ -219,8 +221,11 @@
             let currentTime = Date.now();
 
             if (isFeverMode) {
-                updateScore(1);
-                gameArea.textContent = `FEVER!!! Score: ${score}`;
+                let shakeInterval = currentTime - lastFeverShakeTime;
+                lastFeverShakeTime = currentTime;
+                feverScoreMultiplier = Math.max(1, Math.floor(2000 / shakeInterval)); // Faster shakes result in higher scores
+                updateScore(feverScoreMultiplier);
+                gameArea.textContent = `FEVER!!! Score: ${score} (x${feverScoreMultiplier})`;
                 return;
             }
 
@@ -259,6 +264,7 @@
                     tg.HapticFeedback.impactOccurred('medium');
                 }
             }, 200);
+            lastFeverShakeTime = Date.now();
         }
 
         function endFeverMode() {
