@@ -3,335 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rhythm-based Shake Detection Game with Clear Visual Cues</title>
+    <title>Rhythm Shake Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: sans-serif;
-            color: var(--tg-theme-text-color, #000);
-            background-color: var(--tg-theme-bg-color, #fff);
-            margin: 0;
-            padding: 20px;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
         }
         #gameArea {
             width: 300px;
-            height: 300px;
-            border: 2px solid var(--tg-theme-button-color, #3390ec);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
+            height: 400px;
+            background-color: #000;
             position: relative;
             overflow: hidden;
         }
-        #shakeIndicator {
+        .note {
             position: absolute;
-            width: 100px;
-            height: 100px;
-            background-color: #3390ec;
-            border-radius: 50%;
-            opacity: 0;
-            transition: all 0.1s ease-in-out;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
+            width: 50px;
+            height: 20px;
+            background-color: #00ff00;
+            left: 125px;
+            border-radius: 10px;
         }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        #hitLine {
+            position: absolute;
+            bottom: 50px;
+            width: 100%;
+            height: 5px;
+            background-color: #ff0000;
         }
-        .shake {
-            animation: shake 0.5s;
-            animation-iteration-count: infinite;
+        #score {
+            color: #fff;
+            font-size: 24px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
         }
-        button {
+        #startButton {
+            margin-top: 20px;
             padding: 10px 20px;
             font-size: 18px;
-            background-color: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border: none;
             cursor: pointer;
-            margin: 10px;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        #score, #controls {
-            font-size: 20px;
-            margin-top: 20px;
-        }
-        #controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 300px;
-        }
-        #controls > * {
-            margin-bottom: 10px;
-            width: 100%;
-        }
-        #accelerationCanvas {
-            width: 100%;
-            max-width: 300px;
-            height: 150px;
-            border: 1px solid #ccc;
-            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <div id="gameArea">
-        Press Start to begin
-        <div id="shakeIndicator">SHAKE!</div>
-    </div>
-    <div id="controls">
-        <div>
-            <label for="sensitivity">Shake Sensitivity:</label>
-            <input type="range" id="sensitivity" min="1" max="10" value="5">
-            <span id="sensitivityValue">5</span>
-        </div>
+        <div id="hitLine"></div>
+        <div id="score">Score: 0</div>
     </div>
     <button id="startButton">Start Game</button>
-    <button id="shakeButton" style="display: none;">Shake!</button>
-    <div id="score">Score: 0</div>
-    <canvas id="accelerationCanvas"></canvas>
 
     <script>
-        let tg = window.Telegram?.WebApp;
         let gameArea = document.getElementById('gameArea');
-        let shakeIndicator = document.getElementById('shakeIndicator');
         let startButton = document.getElementById('startButton');
-        let shakeButton = document.getElementById('shakeButton');
         let scoreDisplay = document.getElementById('score');
-        let sensitivitySlider = document.getElementById('sensitivity');
-        let sensitivityValue = document.getElementById('sensitivityValue');
-        let canvas = document.getElementById('accelerationCanvas');
-        let ctx = canvas.getContext('2d');
         let score = 0;
         let isGameRunning = false;
-        let shakeThreshold = 10;
-        let isDesktop = !('ontouchstart' in window);
-
-        let accelerationValues = new Array(300).fill(0);
-        let accelerationWindow = new Array(10).fill(0);
+        let noteSpeed = 5; // pixels per frame
+        let noteInterval = 1000; // 1 second between notes
+        let shakeThreshold = 15;
         let lastShakeTime = 0;
-
-        let shakeWindowStart = 0;
-        let shakeWindowDuration = 400; // 400ms window for shaking
-        let gameInterval;
-        let hasShaken = false;
-        let hasMissed = false;
-
-        // Set canvas size
-        canvas.width = 300;
-        canvas.height = 150;
+        let accelerationWindow = [];
+        let notes = [];
 
         function startGame() {
             if (isGameRunning) return;
             isGameRunning = true;
             score = 0;
-            scoreDisplay.textContent = `Score: ${score}`;
-            gameArea.textContent = "";
+            updateScore();
             startButton.disabled = true;
-            if (isDesktop) {
-                shakeButton.style.display = 'block';
-                shakeButton.disabled = false;
-            }
-            
-            setTimeout(() => {
-                requestAnimationFrame(drawAcceleration);
-                startGameLoop();
-            }, 2000);
+            requestMotionPermission();
+            gameLoop();
         }
-
-        function startGameLoop() {
-            gameInterval = setInterval(() => {
-                shakeWindowStart = Date.now();
-                shakeIndicator.style.opacity = 1;
-                shakeIndicator.classList.add('shake');
-                gameArea.classList.add('shake');
-                
-                setTimeout(() => {
-                    shakeIndicator.style.opacity = 0;
-                    shakeIndicator.classList.remove('shake');
-                    gameArea.classList.remove('shake');
-                }, 200); // Indicator visible and shaking for 200ms
-
-                setTimeout(() => {
-                    if (!hasShaken && !hasMissed) {
-                        updateScore(-1);
-                        gameArea.textContent = "Missed! -1";
-                        hasMissed = true;
-                    }
-                    hasShaken = false;
-                    hasMissed = false;
-                }, shakeWindowDuration);
-            }, 1000);
-        }
-
-        function handleShake() {
-            if (!isGameRunning) return;
-            let currentTime = Date.now();
-            if (currentTime - shakeWindowStart <= shakeWindowDuration) {
-                if (!hasShaken) {
-                    updateScore(1);
-                    gameArea.textContent = "Good shake! +1";
-                    hasShaken = true;
-                }
-            } else {
-                if (!hasMissed) {
-                    updateScore(-1);
-                    gameArea.textContent = "Wrong timing! -1";
-                    hasMissed = true;
-                }
-            }
-        }
-
-        function updateScore(change) {
-            score = Math.max(0, score + change);
-            scoreDisplay.textContent = `Score: ${score}`;
-        }
-
-        startButton.addEventListener('click', () => {
-            if (isDesktop) {
-                startGame();
-            } else {
-                requestMotionPermission();
-            }
-        });
-
-        shakeButton.addEventListener('click', simulateShake);
 
         function requestMotionPermission() {
             if (typeof DeviceMotionEvent?.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
-                            window.addEventListener('devicemotion', handleShakeMotion, false);
-                            startGame();
+                            window.addEventListener('devicemotion', handleMotion);
                         }
                     })
                     .catch(console.error);
             } else {
-                window.addEventListener('devicemotion', handleShakeMotion, false);
-                startGame();
+                window.addEventListener('devicemotion', handleMotion);
             }
         }
 
-        function handleShakeMotion(event) {
-            if (!isGameRunning) return;
+        function handleMotion(event) {
+            let acceleration = event.accelerationIncludingGravity;
+            let acc = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
+            
+            accelerationWindow.push(acc);
+            if (accelerationWindow.length > 10) {
+                accelerationWindow.shift();
+            }
 
-            let acceleration = event.accelerationIncludingGravity.y;
-            accelerationWindow.push(acceleration);
-            accelerationWindow.shift();
-
-            let minAcc = Math.min(...accelerationWindow);
-            let maxAcc = Math.max(...accelerationWindow);
-            let range = maxAcc - minAcc;
-
-            accelerationValues.push(acceleration);
-            accelerationValues.shift();
+            let range = Math.max(...accelerationWindow) - Math.min(...accelerationWindow);
 
             if (range > shakeThreshold) {
                 handleShake();
             }
         }
 
-        function drawAcceleration() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw the center line
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2);
-            ctx.lineTo(canvas.width, canvas.height / 2);
-            ctx.strokeStyle = '#cccccc';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            // Draw the acceleration graph
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2);
-
-            for (let i = 0; i < accelerationValues.length; i++) {
-                let y = canvas.height / 2 - (accelerationValues[i] * 2);
-                ctx.lineTo(i, y);
+        function handleShake() {
+            let currentTime = Date.now();
+            if (currentTime - lastShakeTime > 500) { // Prevent multiple shakes in short succession
+                lastShakeTime = currentTime;
+                checkNoteHit();
             }
-
-            ctx.strokeStyle = '#3390ec';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Draw threshold line (only the lower one)
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2 + (shakeThreshold * 2));
-            ctx.lineTo(canvas.width, canvas.height / 2 + (shakeThreshold * 2));
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            // Draw current range
-            let range = Math.max(...accelerationWindow) - Math.min(...accelerationWindow);
-            ctx.fillStyle = 'black';
-            ctx.font = '14px Arial';
-            ctx.fillText(`Current Range: ${range.toFixed(2)}`, 10, 20);
-
-            requestAnimationFrame(drawAcceleration);
         }
 
-        sensitivitySlider.addEventListener('input', function() {
-            shakeThreshold = 20 - this.value * 1.5;
-            sensitivityValue.textContent = this.value;
-        });
-
-        // Simulate acceleration for desktop
-        function simulateShake() {
-            let simulatedAccelerations = [
-                -15, -10, -5, 0, 5, 10, 15, 10, 5, 0, -5, -10
-            ];
+        function createNote() {
+            let note = document.createElement('div');
+            note.className = 'note';
+            note.style.top = '-20px'; // Start above the game area
+            gameArea.appendChild(note);
+            notes.push(note);
             
-            let i = 0;
-            let interval = setInterval(() => {
-                if (i >= simulatedAccelerations.length) {
-                    clearInterval(interval);
+            // Vibrate the phone
+            if ('vibrate' in navigator) {
+                navigator.vibrate(200); // Vibrate for 200ms
+            }
+        }
+
+        function moveNotes() {
+            for (let i = notes.length - 1; i >= 0; i--) {
+                let note = notes[i];
+                let top = parseInt(note.style.top) + noteSpeed;
+                note.style.top = top + 'px';
+
+                if (top > gameArea.offsetHeight) {
+                    gameArea.removeChild(note);
+                    notes.splice(i, 1);
+                    updateScore(-1); // Penalty for missing a note
+                }
+            }
+        }
+
+        function checkNoteHit() {
+            let hitLinePosition = gameArea.offsetHeight - 50; // Position of the hit line
+            for (let i = notes.length - 1; i >= 0; i--) {
+                let note = notes[i];
+                let notePosition = parseInt(note.style.top) + 20; // Bottom of the note
+                if (Math.abs(notePosition - hitLinePosition) < 20) { // Hit window
+                    gameArea.removeChild(note);
+                    notes.splice(i, 1);
+                    updateScore(1);
                     return;
                 }
-                
-                let acceleration = simulatedAccelerations[i];
-                handleShakeMotion({ accelerationIncludingGravity: { y: acceleration } });
-                
-                i++;
-            }, 50);
+            }
+            updateScore(-1); // Penalty for shaking without a note
         }
 
-        if (isDesktop) {
-            setInterval(() => {
-                let randomAcceleration = (Math.random() - 0.5) * 2;
-                handleShakeMotion({ accelerationIncludingGravity: { y: randomAcceleration } });
-            }, 50);
+        function updateScore(change = 0) {
+            score = Math.max(0, score + change);
+            scoreDisplay.textContent = `Score: ${score}`;
         }
 
-        // Start drawing the acceleration graph immediately
-        requestAnimationFrame(drawAcceleration);
+        function gameLoop() {
+            if (!isGameRunning) return;
+
+            moveNotes();
+            requestAnimationFrame(gameLoop);
+        }
+
+        setInterval(() => {
+            if (isGameRunning) {
+                createNote();
+            }
+        }, noteInterval);
+
+        startButton.addEventListener('click', startGame);
     </script>
 </body>
 </html>
