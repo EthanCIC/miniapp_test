@@ -22,6 +22,7 @@
             font-size: 48px;
             font-weight: bold;
             margin-bottom: 20px;
+            color: white;
         }
         #gameArea {
             width: 300px;
@@ -32,7 +33,6 @@
             border-radius: 50%;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
             margin-bottom: 20px;
-
         }
         #circle {
             position: absolute;
@@ -105,13 +105,6 @@
             background-color: #7a7a7a;
             cursor: not-allowed;
         }
-        #bottomImage {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1000;
-        }
         #moleContainer {
             position: absolute;
             bottom: 0;
@@ -120,9 +113,8 @@
             width: 100px;
             height: 100%;
             overflow: hidden;
-            z-index: 1;
+            z-index: 2;
         }
-
         #mole {
             position: absolute;
             bottom: 0;
@@ -131,13 +123,12 @@
             transform: translateY(100%);
             transition: transform 0.5s ease;
         }
-
         #bottomImage {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            z-index: 2;
+            z-index: 1;
         }
         #gameWrapper {
             display: flex;
@@ -161,13 +152,11 @@
         <button id="actionButton">Start</button>
     </div>
     <div id="moleContainer">
-        <img id="mole" src="deek.png" alt="Mole">
+        <img id="mole" src="deek.png" alt="Mole" style="display: none;">
     </div>
     <div id="bottomImage">
         <img src="grass_and_balls.png" alt="Grass with sweet potatoes" style="width: 100%; height: auto;">
     </div>
-</body>
-    <button id="actionButton">Start</button>
 
     <script>
         let tg = window.Telegram.WebApp;
@@ -204,6 +193,7 @@
             requestMotionPermission();
             startShrinking();
             updateMoleHeight();
+            document.getElementById('mole').style.display = 'block';
         }
 
         function requestMotionPermission() {
@@ -221,7 +211,7 @@
         }
 
         function handleMotion(event) {
-            if (!isGameRunning) return; // Prevent motion handling if game is not running
+            if (!isGameRunning) return;
             let acceleration = event.accelerationIncludingGravity;
             let acc = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
             
@@ -238,10 +228,10 @@
         }
 
         function handleShake() {
-            if (!isGameRunning) return; // Prevent shake handling if game is not running
+            if (!isGameRunning) return;
             let currentTime = Date.now();
             if (isFeverMode) {
-                if (currentTime - lastShakeTime > 100) { // Allow more frequent shakes in FEVER mode
+                if (currentTime - lastShakeTime > 100) {
                     lastShakeTime = currentTime;
                     updateScore(1);
                     vibrateDevice();
@@ -324,7 +314,7 @@
                 updateShrinkSpeed();
             }
 
-            updateMoleHeight(); // 添加這行
+            updateMoleHeight();
 
             if (score >= 10 && !isFeverMode) {
                 startFeverMode();
@@ -372,13 +362,12 @@
             clearInterval(shrinkInterval);
             window.removeEventListener('devicemotion', handleMotion);
             actionButton.textContent = 'Play Again';
-            updateMoleHeight(); // 添加這行
-
+            updateMoleHeight();
+            document.getElementById('mole').style.display = 'none';
         }
 
         function handleActionButton() {
             if (isGameRunning) {
-                // If the game is running, end it
                 endFeverMode();
                 endGame();
             } else {
@@ -386,11 +375,15 @@
             }
         }
 
+        function updateMoleHeight() {
+            const mole = document.getElementById('mole');
+            const maxScore = 10;
+            const visiblePercentage = Math.min(score / maxScore, 1);
+            const translateY = 100 - (visiblePercentage * 100);
+            mole.style.transform = `translateY(${translateY}%)`;
+        }
 
         actionButton.addEventListener('click', handleActionButton);
     </script>
-    <div id="bottomImage">
-        <img src="grass_and_balls.png" alt="Grass with sweet potatoes" style="width: 100%; height: auto;">
-    </div>
 </body>
 </html>
