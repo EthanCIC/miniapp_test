@@ -108,7 +108,7 @@
         #moleContainer {
             position: absolute;
             bottom: 0;
-            left: 50%;
+            left: 53%;
             transform: translateX(-50%);
             width: 100px;
             height: 100%;
@@ -372,6 +372,7 @@
             timeWindow.style.display = 'block';
         }
 
+
         function handleActionButton() {
             if (isGameRunning) {
                 endFeverMode();
@@ -385,8 +386,8 @@
             const mole = document.getElementById('mole');
             const maxScore = 10;
             const visiblePercentage = Math.min(score / maxScore, 1);
-            const translateY = 60 - (visiblePercentage * 60);
-            const scaleX = 0.5 + (visiblePercentage * 0.5);
+            const translateY = 75 - (visiblePercentage * 75);
+            const scaleX = 0.5 + (visiblePercentage * 0.8);
             mole.style.transform = `translateY(${translateY}%) scaleX(${scaleX})`;
         }
 
