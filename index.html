@@ -218,11 +218,7 @@
             let currentTime = Date.now();
 
             if (isFeverMode) {
-                if (currentTime - lastShakeTime > minShakeInterval) {
-                    lastShakeTime = currentTime;
-                    updateScore(1);
-                    gameArea.textContent = `FEVER!!! Score: ${score}`;
-                }
+                handleShakeLogic(currentTime);
                 return;
             }
 
@@ -235,6 +231,16 @@
                 } else if (!isVibrating) {
                     updateScore(-1);
                     gameArea.textContent = "Bad timing! -1";
+                }
+            }
+        }
+
+        function handleShakeLogic(currentTime) {
+            if (currentTime - lastShakeTime > minShakeInterval) {
+                lastShakeTime = currentTime;
+                if (shakeState === 'moving_up') {
+                    updateScore(1);
+                    gameArea.textContent = `FEVER!!! Score: ${score}`;
                 }
             }
         }
@@ -266,7 +272,7 @@
                 if (tg?.HapticFeedback) {
                     tg.HapticFeedback.impactOccurred('medium');
                 }
-            }, 200); // 保持震动频率为 200 毫秒一次，但不影响 shake 检测
+            }, 200);  // 保持震动频率为每 200 毫秒一次，但不影响 shake 检测
         }
 
         function endFeverMode() {
@@ -313,7 +319,7 @@
 
             if (isFeverMode) {
                 if (shakeMagnitude > shakeThreshold) {
-                    handleShake();
+                    detectShake(event);
                 }
                 return;
             }
@@ -337,6 +343,38 @@
                 case 'moving_up':
                     if (currentTime - lastDirectionChangeTime > minShakeInterval) {
                         handleShake();
+                        shakeState = 'idle';
+                    } else if (accelerationChange < -shakeThreshold) {
+                        shakeState = 'moving_down';
+                        lastDirectionChangeTime = currentTime;
+                    }
+                    break;
+            }
+
+            lastAcceleration = acceleration.y;
+        }
+
+        function detectShake(event) {
+            let acceleration = event.accelerationIncludingGravity;
+            let accelerationChange = acceleration.y - lastAcceleration;
+            let currentTime = Date.now();
+
+            switch (shakeState) {
+                case 'idle':
+                    if (accelerationChange < -shakeThreshold) {
+                        shakeState = 'moving_down';
+                        lastDirectionChangeTime = currentTime;
+                    }
+                    break;
+                case 'moving_down':
+                    if (accelerationChange > shakeThreshold) {
+                        shakeState = 'moving_up';
+                        lastDirectionChangeTime = currentTime;
+                    }
+                    break;
+                case 'moving_up':
+                    if (currentTime - lastDirectionChangeTime > minShakeInterval) {
+                        handleShakeLogic(currentTime);
                         shakeState = 'idle';
                     } else if (accelerationChange < -shakeThreshold) {
                         shakeState = 'moving_down';
