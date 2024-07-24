@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixed and Improved Shake Match Game</title>
+    <title>Improved Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -112,7 +112,9 @@
         let isDesktop = !('ontouchstart' in window);
 
         let lastAcceleration = 0;
-        let isMovingDown = false;
+        let shakeState = 'idle';
+        let lastDirectionChangeTime = 0;
+        const MIN_SHAKE_INTERVAL = 300;
 
         if (tg) {
             tg.ready();
@@ -190,7 +192,7 @@
 
             let currentTime = Date.now();
 
-            if (currentTime - lastShakeTime > 500) {
+            if (currentTime - lastShakeTime > MIN_SHAKE_INTERVAL) {
                 lastShakeTime = currentTime;
                 if (isVibrating && canScore) {
                     updateScore(1);
@@ -245,14 +247,32 @@
 
             let acceleration = event.accelerationIncludingGravity.y;
             let accelerationChange = acceleration - lastAcceleration;
+            let currentTime = Date.now();
             
-            debugArea.textContent = `Accel: ${acceleration.toFixed(2)}, Change: ${accelerationChange.toFixed(2)}, Threshold: ${shakeThreshold.toFixed(2)}`;
+            debugArea.textContent = `Accel: ${acceleration.toFixed(2)}, Change: ${accelerationChange.toFixed(2)}, Threshold: ${shakeThreshold.toFixed(2)}, State: ${shakeState}`;
 
-            if (!isMovingDown && accelerationChange < -shakeThreshold) {
-                isMovingDown = true;
-            } else if (isMovingDown && accelerationChange > shakeThreshold) {
-                isMovingDown = false;
-                handleShake();
+            switch (shakeState) {
+                case 'idle':
+                    if (accelerationChange < -shakeThreshold) {
+                        shakeState = 'moving_down';
+                        lastDirectionChangeTime = currentTime;
+                    }
+                    break;
+                case 'moving_down':
+                    if (accelerationChange > shakeThreshold) {
+                        shakeState = 'moving_up';
+                        lastDirectionChangeTime = currentTime;
+                    }
+                    break;
+                case 'moving_up':
+                    if (currentTime - lastDirectionChangeTime > MIN_SHAKE_INTERVAL) {
+                        handleShake();
+                        shakeState = 'idle';
+                    } else if (accelerationChange < -shakeThreshold) {
+                        shakeState = 'moving_down';
+                        lastDirectionChangeTime = currentTime;
+                    }
+                    break;
             }
 
             lastAcceleration = acceleration;
