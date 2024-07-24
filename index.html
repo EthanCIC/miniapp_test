@@ -42,7 +42,6 @@
             transform: translate(-50%, -50%);
             border: 2px solid #4caf50;
             border-radius: 50%;
-            transition: all 0.05s linear;
         }
         #feedback {
             position: absolute;
@@ -109,7 +108,7 @@
         let shakeThreshold = 15;
         let lastShakeTime = 0;
         let accelerationWindow = [];
-        let perfectShakeWindow = 50; // ms
+        let timeWindowSize = 50; // 固定的時間窗口大小
         let pointDeducted = false;
 
         function startGame() {
@@ -119,6 +118,7 @@
             updateScore();
             startButton.disabled = true;
             requestMotionPermission();
+            initializeTimeWindow();
             startShrinking();
         }
 
@@ -160,6 +160,12 @@
             }
         }
 
+        function initializeTimeWindow() {
+            timeWindowSize = 50; // 初始固定大小
+            timeWindow.style.width = timeWindowSize + 'px';
+            timeWindow.style.height = timeWindowSize + 'px';
+        }
+
         function startShrinking() {
             circleSize = 280;
             updateCircleSize();
@@ -175,7 +181,7 @@
                     resetCircle();
                 }
                 updateCircleSize();
-                updateTimeWindow();
+                checkCircleInTimeWindow();
             }, 20);
         }
 
@@ -183,7 +189,6 @@
             clearInterval(shrinkInterval);
             circleSize = 280;
             updateCircleSize();
-            updateTimeWindow();
             pointDeducted = false;
             updateShrinkSpeed();
             setTimeout(startShrinking, 100);
@@ -194,17 +199,16 @@
             circle.style.height = Math.max(0, circleSize) + 'px';
         }
 
-        function updateTimeWindow() {
-            let windowSize = Math.max(0, circleSize - perfectShakeWindow);
-            timeWindow.style.width = windowSize + 'px';
-            timeWindow.style.height = windowSize + 'px';
+        function checkCircleInTimeWindow() {
+            if (circleSize <= timeWindowSize && !pointDeducted) {
+                vibrateDevice(); // 圈進入綠色區域時震動
+            }
         }
 
         function checkShakeTiming() {
-            if (circleSize <= perfectShakeWindow) {
+            if (circleSize <= timeWindowSize) {
                 updateScore(1);
                 showFeedback('#4caf50');
-                vibrateDevice(); // 成功 shake 時震動
                 resetCircle();
             } else if (!pointDeducted) {
                 updateScore(-1);
@@ -229,7 +233,9 @@
 
         function updateShrinkSpeed() {
             shrinkSpeed = baseShrinkSpeed + (score * 0.4);
-            perfectShakeWindow = Math.max(10, 50 - score * 1.5);
+            timeWindowSize = Math.max(10, 50 - score); // 隨分數增加縮小時間窗口
+            timeWindow.style.width = timeWindowSize + 'px';
+            timeWindow.style.height = timeWindowSize + 'px';
         }
 
         function vibrateDevice() {
