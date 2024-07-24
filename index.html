@@ -108,7 +108,7 @@
         #moleContainer {
             position: absolute;
             bottom: 0;
-            left: 52%;
+            left: 53%;
             transform: translateX(-50%);
             width: 100px;
             height: 100%;
@@ -385,7 +385,7 @@
             const maxScore = 10;
             const visiblePercentage = Math.min(score / maxScore, 1);
             const translateY = 70 - (visiblePercentage * 70);
-            const scaleX = 0.5 + (visiblePercentage * 0.5);
+            const scaleX = 0.5 + (visiblePercentage * 0.8);
             mole.style.transform = `translateY(${translateY}%) scaleX(${scaleX})`;
         }
 
