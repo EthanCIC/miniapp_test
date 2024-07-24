@@ -120,7 +120,7 @@
             bottom: 0;
             width: 100%;
             height: auto;
-            transform: translateY(100%);
+            transform: translateY(100%) scaleX(0.5);
             transition: transform 0.5s ease;
         }
         #bottomImage {
@@ -385,7 +385,8 @@
             const maxScore = 10;
             const visiblePercentage = Math.min(score / maxScore, 1);
             const translateY = 60 - (visiblePercentage * 60);
-            mole.style.transform = `translateY(${translateY}%)`;
+            const scaleX = 0.5 + (visiblePercentage * 0.5);
+            mole.style.transform = `translateY(${translateY}%) scaleX(${scaleX})`;
         }
 
         actionButton.addEventListener('click', handleActionButton);
