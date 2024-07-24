@@ -68,7 +68,8 @@
         let shakeThreshold = 15;
         let lastShakeTime = 0;
         let accelerationWindow = [];
-        let perfectShakeWindow = 100; // ms
+        let perfectShakeWindow = 50; // ms
+        let hasVibratedThisCycle = false;
 
         function startGame() {
             if (isGameRunning) return;
@@ -120,20 +121,27 @@
 
         function startShrinking() {
             circleSize = 280;
+            hasVibratedThisCycle = false;
             updateCircleSize();
             shrinkInterval = setInterval(() => {
                 circleSize -= shrinkSpeed;
                 if (circleSize <= 0) {
-                    circleSize = 280;
-                    vibrateDevice();
+                    if (!hasVibratedThisCycle) {
+                        vibrateDevice();
+                        hasVibratedThisCycle = true;
+                    }
+                    setTimeout(() => {
+                        circleSize = 280;
+                        hasVibratedThisCycle = false;
+                    }, 200); // Wait for 200ms before resetting
                 }
                 updateCircleSize();
             }, 20);
         }
 
         function updateCircleSize() {
-            circle.style.width = circleSize + 'px';
-            circle.style.height = circleSize + 'px';
+            circle.style.width = Math.max(0, circleSize) + 'px';
+            circle.style.height = Math.max(0, circleSize) + 'px';
         }
 
         function checkShakeTiming() {
