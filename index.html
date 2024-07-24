@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shake Match Game</title>
+    <title>Dynamic Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -79,7 +79,8 @@
         let scoreDisplay = document.getElementById('score');
         let score = 0;
         let isGameRunning = false;
-        let vibrationInterval = 1000;
+        let baseVibrationInterval = 1000;
+        let vibrationInterval = baseVibrationInterval;
         let lastVibrationTime = 0;
         let isVibrating = false;
         let gameTimer;
@@ -94,6 +95,7 @@
             if (isGameRunning) return;
             isGameRunning = true;
             score = 0;
+            vibrationInterval = baseVibrationInterval;
             scoreDisplay.textContent = `Score: ${score}`;
             gameArea.textContent = "Get ready...";
             startButton.disabled = true;
@@ -125,8 +127,6 @@
 
         function vibrate() {
             if (tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('error');
-                tg.HapticFeedback.notificationOccurred('error');
                 tg.HapticFeedback.notificationOccurred('error');
             }
         }
@@ -161,12 +161,18 @@
                     score++;
                     canScore = false;
                     gameArea.textContent = "Good shake! +1";
+                    updateVibrationInterval();
                 } else if (!isVibrating) {
                     score = Math.max(0, score - 1);
                     gameArea.textContent = "Bad timing! -1";
+                    updateVibrationInterval();
                 }
                 scoreDisplay.textContent = `Score: ${score}`;
             }
+        }
+
+        function updateVibrationInterval() {
+            vibrationInterval = Math.max(100, baseVibrationInterval - (score * 50));
         }
 
         startButton.addEventListener('click', () => {
