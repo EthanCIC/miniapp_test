@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circle Shrink Shake Game with FEVER Mode</title>
+    <title>Circle Shrink Shake Game with FEVER Mode (Fixed)</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -111,6 +111,7 @@
         <div id="feverMode">FEVER MODE</div>
     </div>
     <button id="startButton">Start Game</button>
+    <div id="debug" style="margin-top: 20px; color: white;"></div>
 
     <script>
         let tg = window.Telegram.WebApp;
@@ -121,6 +122,7 @@
         let startButton = document.getElementById('startButton');
         let scoreDisplay = document.getElementById('score');
         let feverModeDisplay = document.getElementById('feverMode');
+        let debugDisplay = document.getElementById('debug');
         let score = 0;
         let isGameRunning = false;
         let circleSize = 280;
@@ -142,7 +144,7 @@
             if (isGameRunning) return;
             isGameRunning = true;
             score = 0;
-            updateScore();
+            updateScore(0);
             startButton.disabled = true;
             requestMotionPermission();
             startShrinking();
@@ -263,6 +265,7 @@
             scoreDisplay.textContent = score;
             updateShrinkSpeed();
             checkFeverMode();
+            debugDisplay.textContent = `Score: ${score}, Fever Mode: ${isFeverMode}`;
         }
 
         function updateShrinkSpeed() {
@@ -270,7 +273,9 @@
         }
 
         function vibrateDevice() {
-            tg.HapticFeedback.impactOccurred('heavy');
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('heavy');
+            }
         }
 
         function checkFeverMode() {
@@ -285,6 +290,7 @@
             feverModeDisplay.classList.add('fever');
             gameArea.style.backgroundColor = '#ff9900';
             feverModeTimer = setTimeout(endFeverMode, FEVER_MODE_DURATION);
+            debugDisplay.textContent += " - FEVER MODE STARTED!";
         }
 
         function endFeverMode() {
@@ -293,6 +299,7 @@
             feverModeDisplay.classList.remove('fever');
             gameArea.style.backgroundColor = '#16213e';
             resetCircle();
+            debugDisplay.textContent += " - FEVER MODE ENDED!";
         }
 
         startButton.addEventListener('click', startGame);
