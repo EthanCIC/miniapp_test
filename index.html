@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Shake Match Game</title>
+    <title>Cross-Platform Shake Match Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -31,7 +31,7 @@
             position: relative;
             overflow: hidden;
         }
-        #startButton, #shakeButton {
+        button {
             padding: 10px 20px;
             font-size: 18px;
             background-color: var(--tg-theme-button-color, #3390ec);
@@ -40,11 +40,11 @@
             cursor: pointer;
             margin: 10px;
         }
-        #startButton:disabled, #shakeButton:disabled {
+        button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
         }
-        #score {
+        #score, #controls {
             font-size: 20px;
             margin-top: 20px;
         }
@@ -63,20 +63,46 @@
             0% { width: 0; height: 0; opacity: 1; }
             100% { width: 300px; height: 300px; opacity: 0; }
         }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 300px;
+        }
+        #controls > * {
+            margin-bottom: 10px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
     <div id="gameArea">Press Start to begin</div>
+    <div id="controls">
+        <select id="vibrationMode">
+            <option value="single">Single Vibration</option>
+            <option value="double">Double Vibration</option>
+            <option value="long">Long Vibration</option>
+        </select>
+        <div>
+            <label for="sensitivity">Shake Sensitivity:</label>
+            <input type="range" id="sensitivity" min="5" max="25" value="15">
+            <span id="sensitivityValue">15</span>
+        </div>
+    </div>
     <button id="startButton">Start Game</button>
     <button id="shakeButton" style="display: none;">Shake!</button>
     <div id="score">Score: 0</div>
 
     <script>
-        let tg = window.Telegram.WebApp;
+        let tg = window.Telegram?.WebApp;
         let gameArea = document.getElementById('gameArea');
         let startButton = document.getElementById('startButton');
         let shakeButton = document.getElementById('shakeButton');
         let scoreDisplay = document.getElementById('score');
+        let vibrationModeSelect = document.getElementById('vibrationMode');
+        let sensitivitySlider = document.getElementById('sensitivity');
+        let sensitivityValue = document.getElementById('sensitivityValue');
         let score = 0;
         let isGameRunning = false;
         let baseVibrationInterval = 1000;
@@ -89,7 +115,11 @@
         let shakeThreshold = 15;
         let isDesktop = !('ontouchstart' in window);
 
-        tg.ready();
+        if (tg) {
+            tg.ready();
+        } else {
+            console.log("Telegram WebApp is not available. Running in standalone mode.");
+        }
 
         function startGame() {
             if (isGameRunning) return;
@@ -120,15 +150,34 @@
                 isVibrating = true;
                 canScore = true;
                 setTimeout(() => {
+                    if (canScore) {
+                        score = Math.max(0, score - 1);
+                        scoreDisplay.textContent = `Score: ${score}`;
+                        gameArea.textContent = "Missed shake! -1";
+                    }
                     isVibrating = false;
-                }, 200);
+                    canScore = false;
+                }, 500);
             }
         }
 
         function vibrate() {
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('error');
+            if (tg?.HapticFeedback) {
+                let mode = vibrationModeSelect.value;
+                switch(mode) {
+                    case 'single':
+                        tg.HapticFeedback.impactOccurred('heavy');
+                        break;
+                    case 'double':
+                        tg.HapticFeedback.impactOccurred('heavy');
+                        setTimeout(() => tg.HapticFeedback.impactOccurred('heavy'), 100);
+                        break;
+                    case 'long':
+                        tg.HapticFeedback.notificationOccurred('error');
+                        break;
+                }
             }
+            console.log("Vibration triggered");
         }
 
         function showCircle() {
@@ -186,7 +235,7 @@
         shakeButton.addEventListener('click', handleShake);
 
         function requestMotionPermission() {
-            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            if (typeof DeviceMotionEvent?.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
@@ -211,6 +260,11 @@
                 handleShake();
             }
         }
+
+        sensitivitySlider.addEventListener('input', function() {
+            shakeThreshold = 30 - this.value;  // Invert the scale
+            sensitivityValue.textContent = this.value;
+        });
 
         setTimeout(endGame, 30000);
     </script>
