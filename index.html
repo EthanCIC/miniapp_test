@@ -149,7 +149,7 @@
             judgmentWindow = baseJudgmentWindow;
             isFeverMode = false;
             feverOverlay.style.display = 'none';
-            scoreDisplay.textContent = `Score: ${score}`;
+            scoreDisplay.textContent = Score: ${score};
             gameArea.textContent = "Get ready...";
             startButton.disabled = true;
             if (isDesktop) {
@@ -205,7 +205,7 @@
             clearInterval(feverVibrationTimer);
             isFeverMode = false;
             feverOverlay.style.display = 'none';
-            gameArea.textContent = `Game Over! Your score: ${score}`;
+            gameArea.textContent = Game Over! Your score: ${score};
             startButton.disabled = false;
             if (isDesktop) {
                 shakeButton.style.display = 'none';
@@ -218,8 +218,11 @@
             let currentTime = Date.now();
 
             if (isFeverMode) {
-                updateScore(1);
-                gameArea.textContent = `FEVER!!! Score: ${score}`;
+                if (currentTime - lastShakeTime > minShakeInterval) {
+                    updateScore(1); // Only score if minimum interval has passed
+                    lastShakeTime = currentTime; // Update last shake time
+                    gameArea.textContent = `FEVER!!! Score: ${score}`;
+                }
                 return;
             }
 
@@ -238,7 +241,7 @@
 
         function updateScore(change) {
             score = Math.max(0, score + change);
-            scoreDisplay.textContent = `Score: ${score}`;
+            scoreDisplay.textContent = Score: ${score};
             if (score === 15 && !isFeverMode) {
                 startFeverMode();
             } else if (!isFeverMode) {
@@ -345,11 +348,6 @@
 
             lastAcceleration = acceleration.y;
         }
-
-        sensitivitySlider.addEventListener('input', function() {
-            shakeThreshold = (30 - this.value) / 5;
-            sensitivityValue.textContent = this.value;
-        });
 
         setTimeout(endGame, 30000);
     </script>
