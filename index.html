@@ -108,7 +108,7 @@
         #moleContainer {
             position: absolute;
             bottom: 0;
-            left: 53%;
+            left: 50%;
             transform: translateX(-50%);
             width: 100px;
             height: 100%;
@@ -367,6 +367,7 @@
             actionButton.style.opacity = '1';
             actionButton.style.visibility = 'visible';
             actionButton.style.pointerEvents = 'auto';
+            scoreDisplay.textContent = `${score} $OGC`;
             circle.style.display = 'block';
             timeWindow.style.display = 'block';
         }
@@ -384,8 +385,8 @@
             const mole = document.getElementById('mole');
             const maxScore = 10;
             const visiblePercentage = Math.min(score / maxScore, 1);
-            const translateY = 75 - (visiblePercentage * 75);
-            const scaleX = 0.5 + (visiblePercentage * 0.8);
+            const translateY = 60 - (visiblePercentage * 60);
+            const scaleX = 0.5 + (visiblePercentage * 0.5);
             mole.style.transform = `translateY(${translateY}%) scaleX(${scaleX})`;
         }
 
