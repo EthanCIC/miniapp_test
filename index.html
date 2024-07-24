@@ -108,7 +108,7 @@
         #moleContainer {
             position: absolute;
             bottom: 0;
-            left: 60%;
+            left: 50%;
             transform: translateX(-50%);
             width: 100px;
             height: 100%;
@@ -380,7 +380,7 @@
             const mole = document.getElementById('mole');
             const maxScore = 10;
             const visiblePercentage = Math.min(score / maxScore, 1);
-            const translateY = 80 - (visiblePercentage * 80); // 從100改為80
+            const translateY = 60 - (visiblePercentage * 60); // 從100改為80
             mole.style.transform = `translateY(${translateY}%)`;
         }
 
