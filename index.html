@@ -92,7 +92,7 @@
         let score = 0;
         let isGameRunning = false;
         let circleSize = 280;
-        let baseShrinkSpeed = 2;
+        let baseShrinkSpeed = 4; // 增加初始縮小速度
         let shrinkSpeed = baseShrinkSpeed;
         let shrinkInterval;
         let shakeThreshold = 15;
@@ -161,14 +161,19 @@
                         showFeedback('#f44336');
                     }
                     vibrateDevice();
-                    setTimeout(() => {
-                        circleSize = 280;
-                        updateShrinkSpeed();
-                        pointDeducted = false;
-                    }, 200); // Wait for 200ms before resetting
+                    resetCircle();
                 }
                 updateCircleSize();
             }, 20);
+        }
+
+        function resetCircle() {
+            clearInterval(shrinkInterval);
+            circleSize = 280;
+            updateCircleSize();
+            pointDeducted = false;
+            updateShrinkSpeed();
+            setTimeout(startShrinking, 100); // 短暫延遲以確保新圈圈的出現是可見的
         }
 
         function updateCircleSize() {
@@ -180,7 +185,7 @@
             if (circleSize <= perfectShakeWindow) {
                 updateScore(1);
                 showFeedback('#4caf50');
-                pointDeducted = true;
+                resetCircle();
             } else if (!pointDeducted) {
                 updateScore(-1);
                 showFeedback('#f44336');
@@ -203,8 +208,8 @@
         }
 
         function updateShrinkSpeed() {
-            shrinkSpeed = baseShrinkSpeed + (score * 0.2); // Increased speed multiplier
-            perfectShakeWindow = Math.max(10, 50 - score); // Decrease perfect window with score, minimum 10ms
+            shrinkSpeed = baseShrinkSpeed + (score * 0.4); // 增加難度提升的速度
+            perfectShakeWindow = Math.max(10, 50 - score * 1.5); // 更快地縮小完美時間窗口
         }
 
         function vibrateDevice() {
