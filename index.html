@@ -3,10 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Improved Circle Shrink Shake Game with FEVER Mode</title>
+    <title>Circle Shrink Shake Game with FEVER Mode</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* ... 保持原有的 CSS 樣式 ... */
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1a1a2e;
+            color: #ffffff;
+        }
+        #gameArea {
+            width: 300px;
+            height: 300px;
+            background-color: #16213e;
+            position: relative;
+            overflow: hidden;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        #circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid #0f3460;
+            border-radius: 50%;
+            transition: all 0.05s linear;
+        }
+        #timeWindow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid #4caf50;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+        }
+        #feedback {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.1s ease-in-out;
+        }
+        #score {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            font-weight: bold;
+            opacity: 0.2;
+            z-index: 1;
+        }
+        #startButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        #startButton:hover {
+            background-color: #d13551;
+        }
+        #startButton:disabled {
+            background-color: #7a7a7a;
+            cursor: not-allowed;
+        }
+        #feverMode {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffffff;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body>
@@ -38,10 +129,10 @@
         let lastShakeTime = 0;
         let accelerationWindow = [];
         const TIME_WINDOW_SIZE = 50;
-        let pointDeducted = false;
         let isInTimeWindow = false;
         let isFeverMode = false;
         let feverModeTimer;
+        let currentCycleScoreChanged = false;
 
         function startGame() {
             if (isGameRunning) return;
@@ -91,7 +182,7 @@
                     updateScore(1);
                     vibrateDevice();
                 }
-            } else if (currentTime - lastShakeTime > 500) {
+            } else if (currentTime - lastShakeTime > 500 && !currentCycleScoreChanged) {
                 lastShakeTime = currentTime;
                 checkShakeTiming();
             }
@@ -100,17 +191,17 @@
         function startShrinking() {
             circleSize = 280;
             updateCircleSize();
-            pointDeducted = false;
+            currentCycleScoreChanged = false;
             isInTimeWindow = false;
             shrinkInterval = setInterval(() => {
                 if (!isFeverMode) {
                     circleSize -= shrinkSpeed;
                     if (circleSize <= 0) {
-                        if (!pointDeducted) {
+                        if (!currentCycleScoreChanged) {
                             updateScore(-1);
                             showFeedback('#f44336');
+                            vibrateDevice();
                         }
-                        vibrateDevice();
                         resetCircle();
                     }
                     updateCircleSize();
@@ -122,7 +213,7 @@
         function resetCircle() {
             circleSize = 280;
             updateCircleSize();
-            pointDeducted = false;
+            currentCycleScoreChanged = false;
             isInTimeWindow = false;
             updateShrinkSpeed();
         }
@@ -142,14 +233,15 @@
         }
 
         function checkShakeTiming() {
-            if (isInTimeWindow) {
+            if (isInTimeWindow && !currentCycleScoreChanged) {
                 updateScore(1);
                 showFeedback('#4caf50');
+                currentCycleScoreChanged = true;
                 resetCircle();
-            } else if (!pointDeducted) {
+            } else if (!isInTimeWindow && !currentCycleScoreChanged) {
                 updateScore(-1);
                 showFeedback('#f44336');
-                pointDeducted = true;
+                currentCycleScoreChanged = true;
             }
         }
 
