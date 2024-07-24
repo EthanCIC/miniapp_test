@@ -1,183 +1,357 @@
-<script>
-    let tg = window.Telegram?.WebApp;
-    let gameArea = document.getElementById('gameArea');
-    let startButton = document.getElementById('startButton');
-    let shakeButton = document.getElementById('shakeButton');
-    let scoreDisplay = document.getElementById('score');
-    let sensitivitySlider = document.getElementById('sensitivity');
-    let sensitivityValue = document.getElementById('sensitivityValue');
-    let feverOverlay = document.getElementById('feverOverlay');
-    let score = 0;
-    let isGameRunning = false;
-    let baseVibrationInterval = 1000;
-    let vibrationInterval = baseVibrationInterval;
-    let lastVibrationTime = 0;
-    let isVibrating = false;
-    let gameTimer;
-    let canScore = false;
-    let lastShakeTime = 0;
-    let shakeThreshold = 2;
-    let isDesktop = !('ontouchstart' in window);
-
-    let lastAcceleration = 0;
-    let shakeState = 'idle';
-    let lastDirectionChangeTime = 0;
-    let minShakeInterval = 300;
-    const MIN_POSSIBLE_INTERVAL = 100;
-
-    let baseJudgmentWindow = 500;
-    let judgmentWindow = baseJudgmentWindow;
-
-    let isFeverMode = false;
-    let feverTimer;
-    let feverVibrationTimer;
-
-    if (tg) tg.ready();
-
-    function startGame() {
-        if (isGameRunning) return;
-        isGameRunning = true;
-        score = 0;
-        vibrationInterval = baseVibrationInterval;
-        minShakeInterval = 300;
-        judgmentWindow = baseJudgmentWindow;
-        isFeverMode = false;
-        feverOverlay.style.display = 'none';
-        scoreDisplay.textContent = `Score: ${score}`;
-        gameArea.textContent = "Get ready...";
-        startButton.disabled = true;
-        if (isDesktop) {
-            shakeButton.style.display = 'block';
-            shakeButton.disabled = false;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shake Match Game with FEVER Mode</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            color: var(--tg-theme-text-color, #000);
+            background-color: var(--tg-theme-bg-color, #fff);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
-        
-        setTimeout(() => {
-            gameArea.textContent = isDesktop ? "Click 'Shake!' when you see the circle!" : "Shake when you see the circle!";
+        #gameArea {
+            width: 300px;
+            height: 300px;
+            border: 2px solid var(--tg-theme-button-color, #3390ec);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #score, #controls {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        .circle {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background-color: rgba(51, 144, 236, 0.5);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 0.5s ease-out;
+        }
+        @keyframes pulse {
+            0% { width: 0; height: 0; opacity: 1; }
+            100% { width: 300px; height: 300px; opacity: 0; }
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 300px;
+        }
+        #controls > * {
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        #feverOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.3);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameArea">Press Start to begin</div>
+    <div id="controls">
+        <div>
+            <label for="sensitivity">Shake Sensitivity:</label>
+            <input type="range" id="sensitivity" min="5" max="25" value="15">
+            <span id="sensitivityValue">15</span>
+        </div>
+    </div>
+    <button id="startButton">Start Game</button>
+    <button id="shakeButton" style="display: none;">Shake!</button>
+    <div id="score">Score: 0</div>
+    <div id="feverOverlay">FEVER!!!</div>
+
+    <script>
+        let tg = window.Telegram?.WebApp;
+        let gameArea = document.getElementById('gameArea');
+        let startButton = document.getElementById('startButton');
+        let shakeButton = document.getElementById('shakeButton');
+        let scoreDisplay = document.getElementById('score');
+        let sensitivitySlider = document.getElementById('sensitivity');
+        let sensitivityValue = document.getElementById('sensitivityValue');
+        let feverOverlay = document.getElementById('feverOverlay');
+        let score = 0;
+        let isGameRunning = false;
+        let baseVibrationInterval = 1000;
+        let vibrationInterval = baseVibrationInterval;
+        let lastVibrationTime = 0;
+        let isVibrating = false;
+        let gameTimer;
+        let canScore = false;
+        let lastShakeTime = 0;
+        let shakeThreshold = 2;
+        let isDesktop = !('ontouchstart' in window);
+
+        let lastAcceleration = 0;
+        let shakeState = 'idle';
+        let lastDirectionChangeTime = 0;
+        let minShakeInterval = 300;
+        const MIN_POSSIBLE_INTERVAL = 100;
+
+        let baseJudgmentWindow = 500;
+        let judgmentWindow = baseJudgmentWindow;
+
+        let isFeverMode = false;
+        let feverTimer;
+        let feverVibrationTimer;
+
+        if (tg) tg.ready();
+
+        function startGame() {
+            if (isGameRunning) return;
+            isGameRunning = true;
+            score = 0;
+            vibrationInterval = baseVibrationInterval;
+            minShakeInterval = 300;
+            judgmentWindow = baseJudgmentWindow;
+            isFeverMode = false;
+            feverOverlay.style.display = 'none';
+            scoreDisplay.textContent = `Score: ${score}`;
+            gameArea.textContent = "Get ready...";
+            startButton.disabled = true;
+            if (isDesktop) {
+                shakeButton.style.display = 'block';
+                shakeButton.disabled = false;
+            }
+            
+            setTimeout(() => {
+                gameArea.textContent = isDesktop ? "Click 'Shake!' when you see the circle!" : "Shake when you see the circle!";
+                lastVibrationTime = Date.now();
+                gameTimer = setInterval(gameLoop, 100);
+            }, 2000);
+        }
+
+        function gameLoop() {
+            let currentTime = Date.now();
+            if (currentTime - lastVibrationTime >= vibrationInterval) {
+                vibrate();
+                showCircle();
+                lastVibrationTime = currentTime;
+                isVibrating = true;
+                canScore = true;
+                setTimeout(() => {
+                    if (canScore) {
+                        updateScore(-1);
+                        gameArea.textContent = "Missed shake! -1";
+                    }
+                    isVibrating = false;
+                    canScore = false;
+                }, judgmentWindow);
+            }
+        }
+
+        function vibrate() {
+            if (tg?.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('heavy');
+            }
+        }
+
+        function showCircle() {
+            let circle = document.createElement('div');
+            circle.className = 'circle';
+            gameArea.appendChild(circle);
+            setTimeout(() => {
+                gameArea.removeChild(circle);
+            }, 500);
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            clearInterval(gameTimer);
+            clearTimeout(feverTimer);
+            clearInterval(feverVibrationTimer);
+            isFeverMode = false;
+            feverOverlay.style.display = 'none';
+            gameArea.textContent = `Game Over! Your score: ${score}`;
+            startButton.disabled = false;
+            if (isDesktop) {
+                shakeButton.style.display = 'none';
+            }
+        }
+
+        function handleShake() {
+            if (!isGameRunning) return;
+
+            let currentTime = Date.now();
+
+            if (isFeverMode) {
+                updateScore(1);
+                gameArea.textContent = `FEVER!!! Score: ${score}`;
+                return;
+            }
+
+            if (currentTime - lastShakeTime > minShakeInterval) {
+                lastShakeTime = currentTime;
+                if (isVibrating && canScore && (currentTime - lastVibrationTime <= judgmentWindow)) {
+                    updateScore(1);
+                    canScore = false;
+                    gameArea.textContent = "Good shake! +1";
+                } else if (!isVibrating) {
+                    updateScore(-1);
+                    gameArea.textContent = "Bad timing! -1";
+                }
+            }
+        }
+
+        function updateScore(change) {
+            score = Math.max(0, score + change);
+            scoreDisplay.textContent = `Score: ${score}`;
+            if (score === 15 && !isFeverMode) {
+                startFeverMode();
+            } else if (!isFeverMode) {
+                updateVibrationInterval();
+            }
+        }
+
+        function updateVibrationInterval() {
+            vibrationInterval = Math.max(MIN_POSSIBLE_INTERVAL, baseVibrationInterval - (Math.floor(score / 2) * 50));
+            minShakeInterval = Math.max(MIN_POSSIBLE_INTERVAL, 300 - (Math.floor(score / 3) * 10));
+            judgmentWindow = Math.max(MIN_POSSIBLE_INTERVAL, baseJudgmentWindow - (score * 10));
+        }
+
+        function startFeverMode() {
+            isFeverMode = true;
+            feverOverlay.style.display = 'flex';
+            gameArea.textContent = "FEVER!!! Shake as fast as you can!";
+            clearInterval(gameTimer);
+            feverTimer = setTimeout(endFeverMode, 10000);
+            
+            // 开始连续震动
+            feverVibrationTimer = setInterval(() => {
+                if (tg?.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            }, 200);  // 每200毫秒震动一次
+        }
+
+        function endFeverMode() {
+            isFeverMode = false;
+            feverOverlay.style.display = 'none';
+            clearInterval(feverVibrationTimer);
+            gameArea.textContent = "Fever ended! Continue normal play.";
             lastVibrationTime = Date.now();
             gameTimer = setInterval(gameLoop, 100);
-        }, 2000);
-    }
-
-    function gameLoop() {
-        let currentTime = Date.now();
-        if (currentTime - lastVibrationTime >= vibrationInterval) {
-            vibrate();
-            showCircle();
-            lastVibrationTime = currentTime;
-            isVibrating = true;
-            canScore = true;
-            setTimeout(() => {
-                if (canScore) {
-                    updateScore(-1);
-                    gameArea.textContent = "Missed shake! -1";
-                }
-                isVibrating = false;
-                canScore = false;
-            }, judgmentWindow);
-        }
-    }
-
-    function vibrate() {
-        if (tg?.HapticFeedback) {
-            tg.HapticFeedback.impactOccurred('heavy');
-        }
-    }
-
-    function showCircle() {
-        let circle = document.createElement('div');
-        circle.className = 'circle';
-        gameArea.appendChild(circle);
-        setTimeout(() => {
-            gameArea.removeChild(circle);
-        }, 500);
-    }
-
-    function endGame() {
-        isGameRunning = false;
-        clearInterval(gameTimer);
-        clearTimeout(feverTimer);
-        clearInterval(feverVibrationTimer);
-        isFeverMode = false;
-        feverOverlay.style.display = 'none';
-        gameArea.textContent = `Game Over! Your score: ${score}`;
-        startButton.disabled = false;
-        if (isDesktop) {
-            shakeButton.style.display = 'none';
-        }
-    }
-
-    function handleShake() {
-        if (!isGameRunning) return;
-
-        let currentTime = Date.now();
-
-        if (isFeverMode) {
-            updateScore(1);
-            gameArea.textContent = `FEVER!!! Score: ${score}`;
-            return;
-        }
-
-        if (currentTime - lastShakeTime > minShakeInterval) {
-            lastShakeTime = currentTime;
-            if (isVibrating && canScore && (currentTime - lastVibrationTime <= judgmentWindow)) {
-                updateScore(1);
-                canScore = false;
-                gameArea.textContent = "Good shake! +1";
-            } else if (!isVibrating) {
-                updateScore(-1);
-                gameArea.textContent = "Bad timing! -1";
-            }
-        }
-    }
-
-    function updateScore(change) {
-        score += change;
-        scoreDisplay.textContent = `Score: ${score}`;
-        if (score >= 15 && !isFeverMode) {
-            startFeverMode();
-        } else if (!isFeverMode) {
             updateVibrationInterval();
         }
-    }
 
-    function updateVibrationInterval() {
-        vibrationInterval = Math.max(MIN_POSSIBLE_INTERVAL, baseVibrationInterval - (Math.floor(score / 2) * 50));
-        minShakeInterval = Math.max(MIN_POSSIBLE_INTERVAL, 300 - (Math.floor(score / 3) * 10));
-        judgmentWindow = Math.max(MIN_POSSIBLE_INTERVAL, baseJudgmentWindow - (score * 10));
-    }
-
-    function startFeverMode() {
-        isFeverMode = true;
-        feverOverlay.style.display = 'flex';
-        gameArea.textContent = "FEVER!!! Shake as fast as you can!";
-        clearInterval(gameTimer);
-        feverTimer = setTimeout(endFeverMode, 10000);
-        
-        // Start continuous vibration
-        feverVibrationTimer = setInterval(() => {
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
+        startButton.addEventListener('click', () => {
+            if (isDesktop) {
+                startGame();
+            } else {
+                requestMotionPermission();
             }
-        }, 200);  // Vibrate every 200 milliseconds
-    }
+        });
 
-    function endFeverMode() {
-        isFeverMode = false;
-        feverOverlay.style.display = 'none';
-        clearInterval(feverVibrationTimer);
-        gameArea.textContent = "Fever ended! Continue normal play.";
-        lastVibrationTime = Date.now();
-        gameTimer = setInterval(gameLoop, 100);
-        updateVibrationInterval();
-    }
+        shakeButton.addEventListener('click', handleShake);
 
-    startButton.addEventListener('click', startGame);
-    shakeButton.addEventListener('click', handleShake);
+        function requestMotionPermission() {
+            if (typeof DeviceMotionEvent?.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('devicemotion', handleShakeMotion, false);
+                            startGame();
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                window.addEventListener('devicemotion', handleShakeMotion, false);
+                startGame();
+            }
+        }
 
-    sensitivitySlider.addEventListener('input', function() {
-        shakeThreshold = (30 - this.value) / 5;
-        sensitivityValue.textContent = this.value;
-    });
+        function handleShakeMotion(event) {
+            if (!isGameRunning) return;
 
-    setTimeout(endGame, 30000);
-</script>
+            let acceleration = event.accelerationIncludingGravity;
+            let shakeMagnitude = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
+
+            if (isFeverMode) {
+                if (shakeMagnitude > shakeThreshold) {
+                    handleShake();
+                }
+                return;
+            }
+
+            let accelerationChange = acceleration.y - lastAcceleration;
+            let currentTime = Date.now();
+
+            switch (shakeState) {
+                case 'idle':
+                    if (accelerationChange < -shakeThreshold) {
+                        shakeState = 'moving_down';
+                        lastDirectionChangeTime = currentTime;
+                    }
+                    break;
+                case 'moving_down':
+                    if (accelerationChange > shakeThreshold) {
+                        shakeState = 'moving_up';
+                        lastDirectionChangeTime = currentTime;
+                    }
+                    break;
+                case 'moving_up':
+                    if (currentTime - lastDirectionChangeTime > minShakeInterval) {
+                        handleShake();
+                        shakeState = 'idle';
+                    } else if (accelerationChange < -shakeThreshold) {
+                        shakeState = 'moving_down';
+                        lastDirectionChangeTime = currentTime;
+                    }
+                    break;
+            }
+
+            lastAcceleration = acceleration.y;
+        }
+
+        sensitivitySlider.addEventListener('input', function() {
+            shakeThreshold = (30 - this.value) / 5;
+            sensitivityValue.textContent = this.value;
+        });
+
+        setTimeout(endGame, 30000);
+    </script>
+</body>
+</html>
