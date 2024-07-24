@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circle Shrink Shake Game with FEVER Mode (Fixed)</title>
+    <title>Circle Shrink Shake Game with FEVER Mode (Score Fix)</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -144,7 +144,7 @@
             if (isGameRunning) return;
             isGameRunning = true;
             score = 0;
-            updateScore(0);
+            updateScoreDisplay();
             startButton.disabled = true;
             requestMotionPermission();
             startShrinking();
@@ -260,11 +260,16 @@
             }, 100);
         }
 
-        function updateScore(change = 0) {
-            score = Math.max(0, score + change);
-            scoreDisplay.textContent = score;
+        function updateScore(change) {
+            score += change;
+            score = Math.max(0, score);  // Ensure score doesn't go below 0
+            updateScoreDisplay();
             updateShrinkSpeed();
             checkFeverMode();
+        }
+
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = score;
             debugDisplay.textContent = `Score: ${score}, Fever Mode: ${isFeverMode}`;
         }
 
