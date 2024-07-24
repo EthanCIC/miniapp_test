@@ -81,7 +81,6 @@
         let lastShakeTime = 0;
         let accelerationWindow = [];
         let perfectShakeWindow = 50; // ms
-        let hasVibratedThisCycle = false;
 
         function startGame() {
             if (isGameRunning) return;
@@ -133,18 +132,13 @@
 
         function startShrinking() {
             circleSize = 280;
-            hasVibratedThisCycle = false;
             updateCircleSize();
             shrinkInterval = setInterval(() => {
                 circleSize -= shrinkSpeed;
                 if (circleSize <= 0) {
-                    if (!hasVibratedThisCycle) {
-                        vibrateDevice();
-                        hasVibratedThisCycle = true;
-                    }
+                    vibrateDevice();
                     setTimeout(() => {
                         circleSize = 280;
-                        hasVibratedThisCycle = false;
                     }, 200); // Wait for 200ms before resetting
                 }
                 updateCircleSize();
@@ -160,11 +154,9 @@
             if (circleSize <= perfectShakeWindow) {
                 updateScore(1);
                 showFeedback('#00ff00');
-                tg.HapticFeedback.impactOccurred('light');
             } else {
                 updateScore(-1);
                 showFeedback('#ff0000');
-                tg.HapticFeedback.notificationOccurred('error');
             }
         }
 
