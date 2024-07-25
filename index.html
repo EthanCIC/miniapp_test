@@ -183,6 +183,33 @@
         let feverModeTimer;
         let feverCountdownInterval;
         let currentCycleScoreChanged = false;
+        let animationId;
+        let lastTimestamp = 0;
+        const FRAME_DURATION = 1000 / 60; // 假設目標是60FPS
+
+        function animateCircle(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const elapsed = timestamp - lastTimestamp;
+
+            if (elapsed >= FRAME_DURATION) {
+                if (!isFeverMode && isGameRunning) {
+                    circleSize -= shrinkSpeed;
+                    if (circleSize <= 0) {
+                        if (!currentCycleScoreChanged) {
+                            updateScore(-1);
+                            showFeedback('rgba(244, 67, 54, 0.3)');
+                            vibrateDevice();
+                        }
+                        resetCircle();
+                    }
+                    updateCircleSize();
+                    checkCircleInTimeWindow();
+                }
+                lastTimestamp = timestamp;
+            }
+
+            animationId = requestAnimationFrame(animateCircle);
+        }
 
         function startGame() {
             if (isGameRunning) return;
@@ -251,21 +278,11 @@
             updateCircleSize();
             currentCycleScoreChanged = false;
             isInTimeWindow = false;
-            shrinkInterval = setInterval(() => {
-                if (!isFeverMode && isGameRunning) {
-                    circleSize -= shrinkSpeed;
-                    if (circleSize <= 0) {
-                        if (!currentCycleScoreChanged) {
-                            updateScore(-1);
-                            showFeedback('rgba(244, 67, 54, 0.3)');
-                            vibrateDevice();
-                        }
-                        resetCircle();
-                    }
-                    updateCircleSize();
-                    checkCircleInTimeWindow();
-                }
-            }, 20);
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            lastTimestamp = 0;
+            animationId = requestAnimationFrame(animateCircle);
         }
 
         function resetCircle() {
@@ -393,7 +410,9 @@
         function endGame(isEarlyEnd = false) {
             isGameRunning = false;
             isFeverMode = false;
-            clearInterval(shrinkInterval);
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
             window.removeEventListener('devicemotion', handleMotion);
             actionButton.textContent = 'Play Again';
             actionButton.style.opacity = '1';
@@ -403,7 +422,6 @@
             circle.style.display = 'block';
             timeWindow.style.display = 'block';
 
-            // 只有在正常結束（非提前結束）時才啟動 mole 縮小動畫
             if (!isEarlyEnd) {
                 setTimeout(startMoleShrinking, 3000);
             }
