@@ -50,8 +50,8 @@
             transform: translate(-50%, -50%);
             border-radius: 50%;
             background-color: rgba(76, 175, 80, 0.1);
-            width: 50px;
-            height: 50px;
+            width: 80px;
+            height: 80px;
         }
         #feedback {
             position: absolute;
@@ -279,11 +279,23 @@
             circle.style.height = Math.max(0, circleSize) + 'px';
         }
 
+        function updateCircleSize() {
+            circle.style.width = Math.max(0, circleSize) + 'px';
+            circle.style.height = Math.max(0, circleSize) + 'px';
+            
+            // 添加這個部分來增強視覺反饋
+            if (circleSize <= TIME_WINDOW_SIZE) {
+                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // 更明顯的綠色
+            } else {
+                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.1)'; // 原來的顏色
+            }
+        }
+
         function checkCircleInTimeWindow() {
-            if (circleSize <= TIME_WINDOW_SIZE && !isInTimeWindow) {
+            if (circleSize <= TIME_WINDOW_SIZE + 5 && !isInTimeWindow) {
                 isInTimeWindow = true;
                 vibrateDevice();
-            } else if (circleSize > TIME_WINDOW_SIZE) {
+            } else if (circleSize > TIME_WINDOW_SIZE + 5) {
                 isInTimeWindow = false;
             }
         }
