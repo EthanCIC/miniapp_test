@@ -232,13 +232,15 @@
         function handleShake() {
             if (!isGameRunning) return;
             let currentTime = Date.now();
+            let shakeCooldown = Math.max(100, 500 - (score * 2)); // 隨分數增加而減少，最小為100毫秒
+
             if (isFeverMode) {
                 if (currentTime - lastShakeTime > 100) {
                     lastShakeTime = currentTime;
                     updateScore(1);
                     vibrateDevice();
                 }
-            } else if (currentTime - lastShakeTime > 500 && !currentCycleScoreChanged) {
+            } else if (currentTime - lastShakeTime > shakeCooldown && !currentCycleScoreChanged) {
                 lastShakeTime = currentTime;
                 checkShakeTiming();
             }
@@ -330,7 +332,7 @@
 
             updateMoleHeight();
 
-            if (score >= 10 && !isFeverMode) {
+            if (score >= 100 && !isFeverMode) {
                 startFeverMode();
             }
         }
