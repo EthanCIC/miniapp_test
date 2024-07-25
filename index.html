@@ -368,7 +368,7 @@
             feverModeDisplay.style.opacity = 0;
             feverCountdown.style.display = 'none';
             clearInterval(feverCountdownInterval);
-            endGame();
+            endGame(false);  // 新增參數，表示這是正常結束，不是提前結束
         }
 
         function startMoleShrinking() {
@@ -388,8 +388,9 @@
             }, 50);
         }
 
-        function endGame() {
+        function endGame(isEarlyEnd = false) {
             isGameRunning = false;
+            isFeverMode = false;
             clearInterval(shrinkInterval);
             window.removeEventListener('devicemotion', handleMotion);
             actionButton.textContent = 'Play Again';
@@ -400,13 +401,16 @@
             circle.style.display = 'block';
             timeWindow.style.display = 'block';
 
-            // 在結算畫面顯示 3 秒後開始縮小 mole
-            setTimeout(startMoleShrinking, 3000);
+            // 只有在正常結束（非提前結束）時才啟動 mole 縮小動畫
+            if (!isEarlyEnd) {
+                setTimeout(startMoleShrinking, 3000);
+            }
         }
 
         function handleActionButton() {
             if (isGameRunning) {
-                endFeverMode();
+                // 提前結束遊戲的邏輯（目前不啟用，但保留以備將來使用）
+                // endGame(true);
             } else {
                 // 重置 mole 的大小和位置
                 const mole = document.getElementById('mole');
