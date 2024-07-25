@@ -369,9 +369,6 @@
             feverCountdown.style.display = 'none';
             clearInterval(feverCountdownInterval);
             endGame();
-            
-            // 新增：3秒後開始縮小 mole
-            setTimeout(startMoleShrinking, 3000);
         }
 
         function startMoleShrinking() {
@@ -402,13 +399,18 @@
             scoreDisplay.textContent = `${score} $OGC`;
             circle.style.display = 'block';
             timeWindow.style.display = 'block';
+
+            // 在結算畫面顯示 3 秒後開始縮小 mole
+            setTimeout(startMoleShrinking, 3000);
         }
 
         function handleActionButton() {
             if (isGameRunning) {
                 endFeverMode();
-                endGame();
             } else {
+                // 重置 mole 的大小和位置
+                const mole = document.getElementById('mole');
+                mole.style.transform = 'translateY(75%) scaleX(0.5)';
                 startGame();
             }
         }
