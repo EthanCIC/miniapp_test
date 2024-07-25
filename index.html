@@ -369,6 +369,26 @@
             feverCountdown.style.display = 'none';
             clearInterval(feverCountdownInterval);
             endGame();
+            
+            // 新增：3秒後開始縮小 mole
+            setTimeout(startMoleShrinking, 3000);
+        }
+
+        function startMoleShrinking() {
+            const mole = document.getElementById('mole');
+            let currentScale = 0.5 + (Math.min(score / 10, 1) * 0.8);
+            let currentTranslateY = 75 - (Math.min(score / 10, 1) * 75);
+
+            const shrinkInterval = setInterval(() => {
+                currentScale = Math.max(0.5, currentScale - 0.02);
+                currentTranslateY = Math.min(75, currentTranslateY + 2);
+
+                mole.style.transform = `translateY(${currentTranslateY}%) scaleX(${currentScale})`;
+
+                if (currentScale <= 0.5 && currentTranslateY >= 75) {
+                    clearInterval(shrinkInterval);
+                }
+            }, 50);
         }
 
         function endGame() {
@@ -383,7 +403,6 @@
             circle.style.display = 'block';
             timeWindow.style.display = 'block';
         }
-
 
         function handleActionButton() {
             if (isGameRunning) {
