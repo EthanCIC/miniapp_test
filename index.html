@@ -35,6 +35,9 @@
             margin-bottom: 20px;
         }
         #circle {
+            --size: 280px;
+            width: var(--size);
+            height: var(--size);
             position: absolute;
             top: 50%;
             left: 50%;
@@ -292,17 +295,10 @@
             isInTimeWindow = false;
             updateShrinkSpeed();
         }
-
         function updateCircleSize() {
-            circle.style.width = Math.max(0, circleSize) + 'px';
-            circle.style.height = Math.max(0, circleSize) + 'px';
-        }
-
-        function updateCircleSize() {
-            circle.style.width = Math.max(0, circleSize) + 'px';
-            circle.style.height = Math.max(0, circleSize) + 'px';
+            circle.style.setProperty('--size', `${Math.max(0, circleSize)}px`);
             
-            // 添加這個部分來增強視覺反饋
+            // 視覺反饋邏輯
             if (circleSize <= TIME_WINDOW_SIZE) {
                 timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // 更明顯的綠色
             } else {
