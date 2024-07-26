@@ -252,7 +252,7 @@
             let acc = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
             
             accelerationWindow.push(acc);
-            if (accelerationWindow.length > 100) {
+            if (accelerationWindow.length > 10) {
                 accelerationWindow.shift();
             }
 
@@ -267,9 +267,9 @@
             if (!isGameRunning) return;
             let currentTime = Date.now();
             // let shakeCooldown = Math.max(100, 500 - (score * 2)); // 隨分數增加而減少，最小為100毫秒
-            let shakeCooldown = 100;
+            let shakeCooldown = 500;
             if (isFeverMode) {
-                if (currentTime - lastShakeTime > 100) {
+                if (currentTime - lastShakeTime > 10) {
                     lastShakeTime = currentTime;
                     updateScore(1);
                     vibrateDevice();
