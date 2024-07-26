@@ -238,9 +238,9 @@ class Game {
         this.elements.scoreDisplay.textContent = `${this.score} $DEEK`;
         this.elements.circle.style.display = 'block';
         this.elements.timeWindow.style.display = 'block';
-
+    
         if (!isEarlyEnd) {
-            this.startMoleShaking();
+            setTimeout(() => this.startMoleShaking(), 1000); // Delay mole shaking and shrinking by 1 second
         }
     }
 
@@ -310,7 +310,7 @@ class Game {
         requestAnimationFrame(animate);
     }
 
-    easeInOutCubic(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
     }
 }
