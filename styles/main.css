@@ -8,7 +8,7 @@ body {
     justify-content: flex-start;
     min-height: 100vh;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     height: 100vh; /* 添加這行 */
 
 }
