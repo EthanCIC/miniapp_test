@@ -232,7 +232,7 @@
             
             // Set the chart dimensions
             accelerationChart.width = monitorContainer.offsetWidth - 20; // Subtract padding
-            accelerationChart.height = 100;
+            accelerationChart.height = 150;  // Increased height
         }
 
         function updateAccelerationDisplay(acc) {
@@ -242,6 +242,9 @@
             
             accelerationData.push(acc);
             accelerationData.shift();
+
+            // Update max acceleration
+            maxAcceleration = Math.max(maxAcceleration, ...accelerationData, shakeThreshold + 10);
             
             drawAccelerationChart();
         }
