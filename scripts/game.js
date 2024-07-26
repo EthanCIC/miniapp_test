@@ -224,7 +224,6 @@ class Game {
     }
 
 
-
     end(isEarlyEnd = false) {
         this.isRunning = false;
         this.isFeverMode = false;
@@ -246,18 +245,30 @@ class Game {
     }
 
     startMoleShrinking() {
-        let currentScale = 0.5 + (Math.min(this.score / 10, 1) * 0.8);
-        let currentTranslateY = 75 - (Math.min(this.score / 10, 1) * 75);
+        const startScale = 0.5 + (Math.min(this.score / 10, 1) * 0.8);
+        const startTranslateY = 75 - (Math.min(this.score / 10, 1) * 75);
+        const endScale = 0.5;
+        const endTranslateY = 75;
+        const duration = 1000; // Animation duration in milliseconds
+        const startTime = performance.now();
 
-        const shrinkInterval = setInterval(() => {
-            currentScale = Math.max(0.5, currentScale - 0.02);
-            currentTranslateY = Math.min(75, currentTranslateY + 2);
+        const animate = (currentTime) => {
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / duration, 1);
+            
+            // Use easeOutCubic for smoother animation
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+            const currentScale = startScale + (endScale - startScale) * easeProgress;
+            const currentTranslateY = startTranslateY + (endTranslateY - startTranslateY) * easeProgress;
 
             this.elements.mole.style.transform = `translateY(${currentTranslateY}%) scaleX(${currentScale})`;
 
-            if (currentScale <= 0.5 && currentTranslateY >= 75) {
-                clearInterval(shrinkInterval);
+            if (progress < 1) {
+                requestAnimationFrame(animate);
             }
-        }, 50);
+        };
+
+        requestAnimationFrame(animate);
     }
 }
