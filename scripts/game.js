@@ -220,7 +220,7 @@ class Game {
         const maxScore = 10;
         const visiblePercentage = Math.min(this.score / maxScore, 1);
         const translateY = 75 - (visiblePercentage * 75);
-        const scaleX = 0.5 + (visiblePercentage * 0.8);
+        const scaleX = 0.5 + (visiblePercentage * 1);
         this.elements.mole.style.transform = `translateY(${translateY}%) scaleX(${scaleX})`;
     }
 
@@ -283,7 +283,7 @@ class Game {
     }
 
     startMoleShrinking() {
-        const initialScale = 0.5 + (Math.min(this.score / 10, 1) * 0.8);
+        const initialScale = 0.5 + (Math.min(this.score / 10, 1) * 1);
         const initialTranslateY = 75 - (Math.min(this.score / 10, 1) * 75);
         const targetScale = 0.5;
         const targetTranslateY = 75;
