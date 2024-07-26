@@ -260,7 +260,7 @@
             } else if (isAboveThreshold && acc <= shakeThreshold) {
                 // 完成一個 shake 循環
                 isAboveThreshold = false;
-                let shakeDuration = Date.now() - shakeStartTime;
+                // let shakeDuration = Date.now() - shakeStartTime;
                 // if (shakeDuration > 50 && shakeDuration < 1000) { // 排除過短或過長的 shake
                 if (True) { // 排除過短或過長的 shake
                 handleShake();
@@ -301,7 +301,7 @@
             isInTimeWindow = false;
             updateShrinkSpeed();
         }
-        
+
         function updateCircleSize() {
             circle.style.setProperty('--size', `${Math.max(0, circleSize)}px`);
 
