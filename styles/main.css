@@ -76,12 +76,15 @@ body {
 
 #feedback {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 100%;
     height: 100%;
+    border-radius: 50%;
     opacity: 0;
     transition: opacity 0.1s ease-in-out;
+    pointer-events: none;
 }
 
 #feverMode {
@@ -145,10 +148,11 @@ body {
 #mole {
     position: absolute;
     bottom: 0;
-    left: 50%;
+    left: 10%;
     width: 100px; /* 设置一个固定宽度 */
     height: auto;
     transform: translate(-50%, 0) scaleX(0.5);
+    transform-origin: bottom center; /* 設置旋轉中心點在底部中央 */
     transition: transform 0.5s ease;
 }
 
