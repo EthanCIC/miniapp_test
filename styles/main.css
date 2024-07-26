@@ -8,7 +8,7 @@ body {
     justify-content: flex-start;
     min-height: 100vh;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
     height: 100vh; /* 添加這行 */
 
 }
@@ -140,7 +140,7 @@ body {
     transform: translateX(-50%);
     width: 100px;
     height: 100%;
-    overflow: hidden;
+    overflow: visible;
     z-index: 1;
 }
 
