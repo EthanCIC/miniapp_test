@@ -252,9 +252,9 @@ class Game {
 
     shakeMole() {
         const shakeAnimation = [
-            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(-5deg)` },
+            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(-50deg)` },
             { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(0deg)` },
-            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(5deg)` },
+            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(50deg)` },
             { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(0deg)` }
         ];
 
