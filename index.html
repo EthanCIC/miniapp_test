@@ -18,6 +18,27 @@
             position: relative;
             overflow: hidden;
         }
+        #accelerationMonitor {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            z-index: 1000;
+        }
+
+        #accelerationDisplay {
+            margin-bottom: 5px;
+        }
+
+        #accelerationChart {
+            width: 100%;
+            height: 100px;
+        }
         #scoreDisplay {
             font-size: 48px;
             font-weight: bold;
@@ -158,7 +179,10 @@
     <div id="bottomImage">
         <img src="grass_and_balls.png" alt="Grass with sweet potatoes" style="width: 100%; height: auto;">
     </div>
-
+    <div id="accelerationMonitor">
+        <div id="accelerationDisplay"></div>
+        <canvas id="accelerationChart"></canvas>
+    </div>
     <script>
         let tg = window.Telegram.WebApp;
         let gameArea = document.getElementById('gameArea');
@@ -202,24 +226,13 @@
             createAccelerationMonitor();
         }
         function createAccelerationMonitor() {
-            accelerationDisplay = document.createElement('div');
-            accelerationDisplay.style.position = 'fixed';
-            accelerationDisplay.style.top = '10px';
-            accelerationDisplay.style.left = '10px';
-            accelerationDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-            accelerationDisplay.style.color = 'white';
-            accelerationDisplay.style.padding = '10px';
-            accelerationDisplay.style.borderRadius = '5px';
-            accelerationDisplay.style.fontFamily = 'monospace';
-            document.body.appendChild(accelerationDisplay);
-
-            accelerationChart = document.createElement('canvas');
-            accelerationChart.width = 300;
-            accelerationChart.height = 150;
-            accelerationChart.style.position = 'fixed';
-            accelerationChart.style.top = '50px';
-            accelerationChart.style.left = '10px';
-            document.body.appendChild(accelerationChart);
+            const monitorContainer = document.getElementById('accelerationMonitor');
+            accelerationDisplay = document.getElementById('accelerationDisplay');
+            accelerationChart = document.getElementById('accelerationChart');
+            
+            // Set the chart dimensions
+            accelerationChart.width = monitorContainer.offsetWidth - 20; // Subtract padding
+            accelerationChart.height = 100;
         }
 
         function updateAccelerationDisplay(acc) {
@@ -235,23 +248,25 @@
 
         function drawAccelerationChart() {
             const ctx = accelerationChart.getContext('2d');
-            ctx.clearRect(0, 0, accelerationChart.width, accelerationChart.height);
+            const width = accelerationChart.width;
+            const height = accelerationChart.height;
+            
+            ctx.clearRect(0, 0, width, height);
             
             ctx.beginPath();
             ctx.strokeStyle = 'white';
-            ctx.moveTo(0, accelerationChart.height - (accelerationData[0] * 5));
+            ctx.moveTo(0, height - (accelerationData[0] * 5));
             
             for (let i = 1; i < CHART_POINTS; i++) {
-                ctx.lineTo(i * (accelerationChart.width / CHART_POINTS), 
-                        accelerationChart.height - (accelerationData[i] * 5));
+                ctx.lineTo(i * (width / CHART_POINTS), height - (accelerationData[i] * 5));
             }
             ctx.stroke();
             
             // Draw threshold line
             ctx.beginPath();
             ctx.strokeStyle = 'red';
-            ctx.moveTo(0, accelerationChart.height - (shakeThreshold * 5));
-            ctx.lineTo(accelerationChart.width, accelerationChart.height - (shakeThreshold * 5));
+            ctx.moveTo(0, height - (shakeThreshold * 5));
+            ctx.lineTo(width, height - (shakeThreshold * 5));
             ctx.stroke();
         }
 
