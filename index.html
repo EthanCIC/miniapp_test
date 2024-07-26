@@ -188,6 +188,8 @@
         let lastTimestamp = 0;
         const FRAME_DURATION = 1000 / 60; // 假設目標是60FPS
         let isCheckingShakeTiming = false;
+        let isAboveThreshold = false;
+        let shakeStartTime = 0;
 
 
         function init() {
@@ -251,33 +253,28 @@
             let acceleration = event.accelerationIncludingGravity;
             let acc = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
             
-            accelerationWindow.push(acc);
-            if (accelerationWindow.length > 10) {
-                accelerationWindow.shift();
-            }
-
-            let range = Math.max(...accelerationWindow) - Math.min(...accelerationWindow);
-
-            if (range > shakeThreshold) {
+            if (!isAboveThreshold && acc > shakeThreshold) {
+                // 開始一個新的 shake 循環
+                isAboveThreshold = true;
+                shakeStartTime = Date.now();
+            } else if (isAboveThreshold && acc <= shakeThreshold) {
+                // 完成一個 shake 循環
+                isAboveThreshold = false;
+                let shakeDuration = Date.now() - shakeStartTime;
+                // if (shakeDuration > 50 && shakeDuration < 1000) { // 排除過短或過長的 shake
+                if (True) { // 排除過短或過長的 shake
                 handleShake();
+                }
             }
         }
 
         function handleShake() {
             if (!isGameRunning) return;
-            let currentTime = Date.now();
-            // let shakeCooldown = Math.max(100, 500 - (score * 2)); // 隨分數增加而減少，最小為100毫秒
-            let shakeCooldown = 300;
             if (isFeverMode) {
-                if (currentTime - lastShakeTime > shakeCooldown) {
-                    lastShakeTime = currentTime;
-                    updateScore(1);
-                    vibrateDevice();
-                }
-            } else if (currentTime - lastShakeTime > shakeCooldown && !isCheckingShakeTiming) {
-                lastShakeTime = currentTime;
+                updateScore(1);
+                vibrateDevice();
+            } else if (!isCheckingShakeTiming) {
                 isCheckingShakeTiming = true;
-                // 使用 setTimeout 將 checkShakeTiming 的執行推遲到下一個事件循環
                 setTimeout(() => {
                     checkShakeTiming();
                     isCheckingShakeTiming = false;
@@ -304,6 +301,7 @@
             isInTimeWindow = false;
             updateShrinkSpeed();
         }
+        
         function updateCircleSize() {
             circle.style.setProperty('--size', `${Math.max(0, circleSize)}px`);
 
@@ -337,6 +335,7 @@
                 updateScore(-1);
                 showFeedback('rgba(244, 67, 54, 0.3)');
                 currentCycleScoreChanged = true;
+                // 注意：這裡我們不調用 resetCircle()，因為失誤時我們希望圓圈繼續縮小
             }
         }
 
