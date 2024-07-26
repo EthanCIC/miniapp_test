@@ -250,20 +250,26 @@ class Game {
     }
 
     shakeMole() {
-        const currentTransform = this.elements.mole.style.transform || `translateY(75%) scaleX(0.5)`;
+        const baseTransform = this.elements.mole.style.transform || `translateY(75%) scaleX(0.5)`;
+        const rotateOrigin = 'bottom center';  // 設置旋轉的原點
+    
+        // 解析當前的 transform
+        const translateY = baseTransform.match(/translateY\((.*?)\)/)?.[1] || '75%';
+        const scaleX = baseTransform.match(/scaleX\((.*?)\)/)?.[1] || '0.5';
+    
         const shakeAnimation = [
-            { transform: `${currentTransform} rotate(-5deg)` },
-            { transform: `${currentTransform} rotate(0deg)` },
-            { transform: `${currentTransform} rotate(5deg)` },
-            { transform: `${currentTransform} rotate(0deg)` }
+            { transform: `translateY(${translateY}) scaleX(${scaleX}) rotate(-3deg)`, transformOrigin: rotateOrigin },
+            { transform: `translateY(${translateY}) scaleX(${scaleX}) rotate(0deg)`, transformOrigin: rotateOrigin },
+            { transform: `translateY(${translateY}) scaleX(${scaleX}) rotate(3deg)`, transformOrigin: rotateOrigin },
+            { transform: `translateY(${translateY}) scaleX(${scaleX}) rotate(0deg)`, transformOrigin: rotateOrigin }
         ];
-
+    
         const shakeOptions = {
             duration: 500,
             iterations: 1,
             easing: 'ease-in-out'
         };
-
+    
         const animation = this.elements.mole.animate(shakeAnimation, shakeOptions);
         
         animation.onfinish = () => {
