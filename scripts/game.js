@@ -245,22 +245,23 @@ class Game {
     }
 
     startMoleShrinking() {
-        const startScale = 0.5 + (Math.min(this.score / 10, 1) * 0.8);
-        const startTranslateY = 75 - (Math.min(this.score / 10, 1) * 75);
-        const endScale = 0.5;
-        const endTranslateY = 75;
+        const initialScale = 0.5 + (Math.min(this.score / 10, 1) * 0.8);
+        const initialTranslateY = 75 - (Math.min(this.score / 10, 1) * 75);
+        const targetScale = 0.5;
+        const targetTranslateY = 75;
         const duration = 1000; // Animation duration in milliseconds
-        const startTime = performance.now();
+        let startTime;
 
         const animate = (currentTime) => {
+            if (!startTime) startTime = currentTime;
             const elapsedTime = currentTime - startTime;
             const progress = Math.min(elapsedTime / duration, 1);
-            
-            // Use easeOutCubic for smoother animation
-            const easeProgress = 1 - Math.pow(1 - progress, 3);
 
-            const currentScale = startScale + (endScale - startScale) * easeProgress;
-            const currentTranslateY = startTranslateY + (endTranslateY - startTranslateY) * easeProgress;
+            // Easing function for smooth animation
+            const easeProgress = this.easeInOutCubic(progress);
+
+            const currentScale = initialScale + (targetScale - initialScale) * easeProgress;
+            const currentTranslateY = initialTranslateY + (targetTranslateY - initialTranslateY) * easeProgress;
 
             this.elements.mole.style.transform = `translateY(${currentTranslateY}%) scaleX(${currentScale})`;
 
@@ -270,5 +271,10 @@ class Game {
         };
 
         requestAnimationFrame(animate);
+    }
+
+    // Add this easing function to the Game class
+    easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 }
