@@ -190,12 +190,71 @@
         let isCheckingShakeTiming = false;
         let isAboveThreshold = false;
         let shakeStartTime = 0;
+        let accelerationDisplay;
+        let accelerationChart;
+        const CHART_POINTS = 50;
+        let accelerationData = Array(CHART_POINTS).fill(0);
 
 
         function init() {
             updateCircleSize();
             updateMoleHeight();
+            createAccelerationMonitor();
         }
+        function createAccelerationMonitor() {
+            accelerationDisplay = document.createElement('div');
+            accelerationDisplay.style.position = 'fixed';
+            accelerationDisplay.style.top = '10px';
+            accelerationDisplay.style.left = '10px';
+            accelerationDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+            accelerationDisplay.style.color = 'white';
+            accelerationDisplay.style.padding = '10px';
+            accelerationDisplay.style.borderRadius = '5px';
+            accelerationDisplay.style.fontFamily = 'monospace';
+            document.body.appendChild(accelerationDisplay);
+
+            accelerationChart = document.createElement('canvas');
+            accelerationChart.width = 300;
+            accelerationChart.height = 150;
+            accelerationChart.style.position = 'fixed';
+            accelerationChart.style.top = '50px';
+            accelerationChart.style.left = '10px';
+            document.body.appendChild(accelerationChart);
+        }
+
+        function updateAccelerationDisplay(acc) {
+            if (accelerationDisplay) {
+                accelerationDisplay.textContent = `Acc: ${acc.toFixed(2)} | Threshold: ${shakeThreshold}`;
+            }
+            
+            accelerationData.push(acc);
+            accelerationData.shift();
+            
+            drawAccelerationChart();
+        }
+
+        function drawAccelerationChart() {
+            const ctx = accelerationChart.getContext('2d');
+            ctx.clearRect(0, 0, accelerationChart.width, accelerationChart.height);
+            
+            ctx.beginPath();
+            ctx.strokeStyle = 'white';
+            ctx.moveTo(0, accelerationChart.height - (accelerationData[0] * 5));
+            
+            for (let i = 1; i < CHART_POINTS; i++) {
+                ctx.lineTo(i * (accelerationChart.width / CHART_POINTS), 
+                        accelerationChart.height - (accelerationData[i] * 5));
+            }
+            ctx.stroke();
+            
+            // Draw threshold line
+            ctx.beginPath();
+            ctx.strokeStyle = 'red';
+            ctx.moveTo(0, accelerationChart.height - (shakeThreshold * 5));
+            ctx.lineTo(accelerationChart.width, accelerationChart.height - (shakeThreshold * 5));
+            ctx.stroke();
+        }
+
         function animateCircle(timestamp) {
             if (!lastTimestamp) lastTimestamp = timestamp;
             const elapsed = timestamp - lastTimestamp;
@@ -253,12 +312,12 @@
             let acceleration = event.accelerationIncludingGravity;
             let acc = Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2);
             
+            updateAccelerationDisplay(acc);
+            
             if (!isAboveThreshold && acc > shakeThreshold) {
-                // 開始一個新的 shake 循環
                 isAboveThreshold = true;
                 shakeStartTime = Date.now();
             } else if (isAboveThreshold && acc <= shakeThreshold) {
-                // 完成一個 shake 循環
                 isAboveThreshold = false;
                 handleShake();
             }
