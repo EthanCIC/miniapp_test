@@ -1,6 +1,9 @@
+console.log('ui.js is being executed');
+
 let score = 0;
 
 export function init() {
+    console.log('ui.js: init function called');
     updateCircleSize(280);
     updateMoleHeight();
 }
@@ -103,5 +106,8 @@ export function startMoleShrinking() {
 }
 
 export function getScore() {
+    console.log('ui.js: getScore function called, returning', score);
     return score;
 }
+
+console.log('ui.js: All functions exported');

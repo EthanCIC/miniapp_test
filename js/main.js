@@ -1,16 +1,24 @@
+console.log('main.js is being executed');
+
 import { startGame, handleActionButton } from './game.js';
 import { init, updateMoleHeight } from './ui.js';
 import { enableDevMode, requestMotionPermission } from './accelerometer.js';
 
+console.log('main.js: All imports completed');
+
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('main.js: DOM fully loaded');
     init();
-    document.getElementById('actionButton').addEventListener('click', handleActionButton);
+    console.log('main.js: Game initialized');
+    const actionButton = document.getElementById('actionButton');
+    actionButton.addEventListener('click', () => {
+        console.log('main.js: Action button clicked');
+        handleActionButton();
+    });
     document.getElementById('mole').style.display = 'block';
     
-    // 啟用開發者模式（顯示加速度圖表）
-    // 如果不需要顯示加速度圖表，請註釋掉下面這行
     enableDevMode();
+    console.log('main.js: Dev mode enabled');
 });
 
-// 導出需要在其他模塊中使用的函數
-export { updateMoleHeight };
+console.log('main.js: DOMContentLoaded event listener set up');

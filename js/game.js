@@ -1,4 +1,17 @@
-import { updateCircleSize, showFeedback, updateScore, startFeverMode, endFeverMode, startMoleShrinking } from './ui.js';
+console.log('game.js is being executed');
+
+import { 
+    updateCircleSize, 
+    showFeedback, 
+    updateScore, 
+    startFeverMode, 
+    endFeverMode, 
+    startMoleShrinking, 
+    getScore 
+} from './ui.js';
+
+console.log('game.js: Imports from ui.js completed');
+
 import { handleMotion, requestMotionPermission } from './accelerometer.js';
 
 let tg = window.Telegram.WebApp;
@@ -102,7 +115,14 @@ export function checkShakeTiming() {
 }
 
 function updateShrinkSpeed() {
-    shrinkSpeed = baseShrinkSpeed + (getScore() * 0.4);
+    console.log('game.js: updateShrinkSpeed called');
+    if (typeof getScore !== 'function') {
+        console.error('game.js: getScore is not a function!', getScore);
+        return;
+    }
+    const currentScore = getScore();
+    console.log('game.js: Current score:', currentScore);
+    shrinkSpeed = baseShrinkSpeed + (currentScore * 0.4);
 }
 
 function vibrateDevice() {
@@ -130,4 +150,6 @@ export function endGame(isEarlyEnd = false) {
     }
 }
 
-export { isGameRunning, isFeverMode };
+export {isGameRunning, isFeverMode };
+
+console.log('game.js: All functions defined');
