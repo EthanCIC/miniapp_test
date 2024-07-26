@@ -187,6 +187,8 @@
         let animationId;
         let lastTimestamp = 0;
         const FRAME_DURATION = 1000 / 60; // 假設目標是60FPS
+        let isCheckingShakeTiming = false;
+
 
         function init() {
             updateCircleSize();
@@ -264,17 +266,22 @@
         function handleShake() {
             if (!isGameRunning) return;
             let currentTime = Date.now();
-            let shakeCooldown = Math.max(100, 500 - (score * 2)); // 隨分數增加而減少，最小為100毫秒
-
+            // let shakeCooldown = Math.max(100, 500 - (score * 2)); // 隨分數增加而減少，最小為100毫秒
+            let shakeCooldown = 100;
             if (isFeverMode) {
                 if (currentTime - lastShakeTime > 10) {
                     lastShakeTime = currentTime;
                     updateScore(1);
                     vibrateDevice();
                 }
-            } else if (currentTime - lastShakeTime > shakeCooldown && !currentCycleScoreChanged) {
+            } else if (currentTime - lastShakeTime > shakeCooldown && !isCheckingShakeTiming) {
                 lastShakeTime = currentTime;
-                checkShakeTiming();
+                isCheckingShakeTiming = true;
+                // 使用 setTimeout 將 checkShakeTiming 的執行推遲到下一個事件循環
+                setTimeout(() => {
+                    checkShakeTiming();
+                    isCheckingShakeTiming = false;
+                }, 0);
             }
         }
 
