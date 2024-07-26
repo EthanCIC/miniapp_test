@@ -223,6 +223,8 @@ class Game {
         this.elements.mole.style.transform = `translateY(${translateY}%) scaleX(${scaleX})`;
     }
 
+
+
     end(isEarlyEnd = false) {
         this.isRunning = false;
         this.isFeverMode = false;
