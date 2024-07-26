@@ -238,7 +238,7 @@ class Game {
         this.elements.scoreDisplay.textContent = `${this.score} $DEEK`;
         this.elements.circle.style.display = 'block';
         this.elements.timeWindow.style.display = 'block';
-    
+
         if (!isEarlyEnd) {
             this.startMoleShaking();
         }
@@ -287,7 +287,7 @@ class Game {
         const initialTranslateY = 75 - (Math.min(this.score / 10, 1) * 75);
         const targetScale = 0.5;
         const targetTranslateY = 75;
-        const duration = 2500; // 動畫持續時間（毫秒）
+        const duration = 1800; // 動畫持續時間（毫秒）
         let startTime;
 
         const animate = (currentTime) => {
