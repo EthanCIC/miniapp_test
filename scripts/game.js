@@ -264,7 +264,7 @@ class Game {
 
     shakeMole() {
         const originalTransform = this.elements.mole.style.transform;
-        const shakeAmount = 5; // pixels
+        const shakeAmount = 50; // pixels
         const shakeDuration = 100; // milliseconds
         let startTime;
 
