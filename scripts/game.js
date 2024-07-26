@@ -240,8 +240,50 @@ class Game {
         this.elements.timeWindow.style.display = 'block';
 
         if (!isEarlyEnd) {
-            setTimeout(() => this.startMoleShrinking(), 3000);
+            this.startMoleShakingThenShrinking();
         }
+    }
+
+    startMoleShakingThenShrinking() {
+        let shakeCount = 0;
+        const totalShakes = 3;
+        const shakeInterval = 1000; // 1 second between shakes
+
+        const shakeAndWait = () => {
+            if (shakeCount < totalShakes) {
+                this.shakeMole();
+                shakeCount++;
+                setTimeout(shakeAndWait, shakeInterval);
+            } else {
+                this.startMoleShrinking();
+            }
+        };
+
+        shakeAndWait();
+    }
+
+    shakeMole() {
+        const originalTransform = this.elements.mole.style.transform;
+        const shakeAmount = 5; // pixels
+        const shakeDuration = 100; // milliseconds
+        let startTime;
+
+        const shake = (currentTime) => {
+            if (!startTime) startTime = currentTime;
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / shakeDuration, 1);
+
+            const offset = Math.sin(progress * Math.PI * 2) * shakeAmount;
+            this.elements.mole.style.transform = `${originalTransform} translateX(${offset}px)`;
+
+            if (progress < 1) {
+                requestAnimationFrame(shake);
+            } else {
+                this.elements.mole.style.transform = originalTransform;
+            }
+        };
+
+        requestAnimationFrame(shake);
     }
 
     startMoleShrinking() {
@@ -273,8 +315,8 @@ class Game {
         requestAnimationFrame(animate);
     }
 
-    // Add this easing function to the Game class
     easeInOutCubic(t) {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
+
 }
