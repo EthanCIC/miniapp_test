@@ -269,7 +269,7 @@
             // let shakeCooldown = Math.max(100, 500 - (score * 2)); // 隨分數增加而減少，最小為100毫秒
             let shakeCooldown = 500;
             if (isFeverMode) {
-                if (currentTime - lastShakeTime > 10) {
+                if (currentTime - lastShakeTime > 100) {
                     lastShakeTime = currentTime;
                     updateScore(1);
                     vibrateDevice();
