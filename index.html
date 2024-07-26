@@ -180,7 +180,7 @@
         let shakeThreshold = 15;
         let lastShakeTime = 0;
         let accelerationWindow = [];
-        const TIME_WINDOW_SIZE = 110;
+        const TIME_WINDOW_SIZE = 150;
         let isInTimeWindow = false;
         let isFeverMode = false;
         let feverModeTimer;
@@ -297,7 +297,10 @@
         }
         function updateCircleSize() {
             circle.style.setProperty('--size', `${Math.max(0, circleSize)}px`);
-            
+
+            timeWindow.style.width = `${TIME_WINDOW_SIZE}px`;
+            timeWindow.style.height = `${TIME_WINDOW_SIZE}px`;
+
             // 視覺反饋邏輯
             if (circleSize <= TIME_WINDOW_SIZE) {
                 timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // 更明顯的綠色
