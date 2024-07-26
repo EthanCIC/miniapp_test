@@ -240,7 +240,7 @@ class Game {
         this.elements.timeWindow.style.display = 'block';
     
         if (!isEarlyEnd) {
-            setTimeout(() => this.startMoleShaking(), 1000); // Delay mole shaking and shrinking by 1 second
+            this.startMoleShaking();
         }
     }
 
