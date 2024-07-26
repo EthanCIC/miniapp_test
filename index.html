@@ -223,6 +223,7 @@
             actionButton.style.visibility = 'hidden';
             actionButton.style.pointerEvents = 'none';
             requestMotionPermission();
+            updateCircleSize(); // 添加这行来设置初始大小
             startShrinking();
             document.getElementById('mole').style.display = 'block';
             updateMoleHeight();
