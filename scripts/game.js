@@ -274,7 +274,16 @@ class Game {
             const progress = Math.min(elapsedTime / shakeDuration, 1);
 
             const offset = Math.sin(progress * Math.PI * 2) * shakeAmount;
-            this.elements.mole.style.transform = `${originalTransform} translateX(${offset}px)`;
+            
+            // Parse the original transform to get translateY and scaleX values
+            const translateYMatch = originalTransform.match(/translateY\(([-\d.]+)%\)/);
+            const scaleXMatch = originalTransform.match(/scaleX\(([-\d.]+)\)/);
+            
+            const translateY = translateYMatch ? translateYMatch[1] : 0;
+            const scaleX = scaleXMatch ? scaleXMatch[1] : 1;
+
+            // Apply the shake effect while maintaining the original transform
+            this.elements.mole.style.transform = `translateY(${translateY}%) scaleX(${scaleX}) translateX(${offset}px)`;
 
             if (progress < 1) {
                 requestAnimationFrame(shake);
@@ -285,6 +294,7 @@ class Game {
 
         requestAnimationFrame(shake);
     }
+
 
     startMoleShrinking() {
         const initialScale = 0.5 + (Math.min(this.score / 10, 1) * 0.8);
