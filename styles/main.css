@@ -142,7 +142,7 @@ body {
 }
 
 #feverMode::after {
-    content: 'FEVER!';
+    content: 'FEVER!!!';
     display: block;
     animation: shake 0.5s infinite;
 }
@@ -191,7 +191,7 @@ body {
 #mole {
     position: absolute;
     bottom: 0;
-    left: 15%;
+    left: 16%;
     width: 100px; /* 设置一个固定宽度 */
     height: auto;
     transform: translate(-50%, 0) scaleX(0.5);
