@@ -9,6 +9,8 @@ body {
     min-height: 100vh;
     position: relative;
     overflow: hidden;
+    height: 100vh; /* 添加這行 */
+
 }
 
 #accelerationMonitor {
@@ -134,7 +136,7 @@ body {
 #moleContainer {
     position: absolute;
     bottom: 0;
-    left: 53%;
+    left: 55%;
     transform: translateX(-50%);
     width: 100px;
     height: 100%;
@@ -157,6 +159,7 @@ body {
     left: 0;
     width: 100%;
     z-index: 2;
+    line-height: 0; /* 添加這行 */
 }
 
 #gameWrapper {
