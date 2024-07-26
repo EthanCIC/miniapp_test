@@ -411,7 +411,7 @@
 
             // 視覺反饋邏輯
             if (isGameRunning && circleSize <= TIME_WINDOW_SIZE) {
-                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // 更明显的绿色
+                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.6)'; // 更明显的绿色
             } else {
                 timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.1)'; // 原来的颜色
             }
@@ -429,14 +429,14 @@
         function checkShakeTiming() {
             if (isInTimeWindow && !currentCycleScoreChanged) {
                 updateScore(1);
-                showFeedback('rgba(76, 175, 80, 0.3)');
+                showFeedback('rgba(76, 175, 80, 0.6)');
                 currentCycleScoreChanged = true;
                 resetCircle();
             } else if (!isInTimeWindow && !currentCycleScoreChanged) {
                 updateScore(-1);
-                showFeedback('rgba(244, 67, 54, 0.3)');
+                showFeedback('rgba(244, 67, 54, 0.6)');
                 currentCycleScoreChanged = true;
-                // 注意：這裡我們不調用 resetCircle()，因為失誤時我們希望圓圈繼續縮小
+                resetCircle();
             }
         }
 
