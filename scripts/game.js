@@ -240,7 +240,7 @@ class Game {
         this.elements.timeWindow.style.display = 'block';
 
         if (!isEarlyEnd) {
-            this.startMoleShaking();
+            setTimeout(() => this.startMoleShaking(), 1000); // Delay mole shaking and shrinking by 1 second
         }
     }
 
@@ -287,7 +287,7 @@ class Game {
         const initialTranslateY = 75 - (Math.min(this.score / 10, 1) * 75);
         const targetScale = 0.5;
         const targetTranslateY = 75;
-        const duration = 1800; // 動畫持續時間（毫秒）
+        const duration = 2500; // 動畫持續時間（毫秒）
         let startTime;
 
         const animate = (currentTime) => {
@@ -295,7 +295,7 @@ class Game {
             const elapsedTime = currentTime - startTime;
             const progress = Math.min(elapsedTime / duration, 1);
 
-            const easeProgress = this.easeInOutCubic(progress);
+            const easeProgress = this.easeOutCubic(progress);
 
             const currentScale = initialScale + (targetScale - initialScale) * easeProgress;
             const currentTranslateY = initialTranslateY + (targetTranslateY - initialTranslateY) * easeProgress;
@@ -310,7 +310,7 @@ class Game {
         requestAnimationFrame(animate);
     }
 
-    easeInOutCubic(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
     }
 }
