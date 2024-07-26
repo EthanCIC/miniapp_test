@@ -251,24 +251,28 @@ class Game {
     }
 
     shakeMole() {
+        const currentTransform = `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()})`;
         const shakeAnimation = [
-            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(-50deg)` },
-            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(0deg)` },
-            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(50deg)` },
-            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(0deg)` }
+            { transform: `${currentTransform} rotate(-5deg)` },
+            { transform: `${currentTransform} rotate(0deg)` },
+            { transform: `${currentTransform} rotate(5deg)` },
+            { transform: `${currentTransform} rotate(0deg)` }
         ];
 
         const shakeOptions = {
             duration: 500,
-            iterations: 1
+            iterations: 1,
+            easing: 'ease-in-out'
         };
 
-        this.elements.mole.animate(shakeAnimation, shakeOptions).onfinish = () => {
+        const animation = this.elements.mole.animate(shakeAnimation, shakeOptions);
+        
+        animation.onfinish = () => {
             this.moleShakeCount++;
             if (this.moleShakeCount < 3) {
                 setTimeout(() => this.shakeMole(), 500); // 0.5秒休息
             } else {
-                this.startMoleShrinking();
+                setTimeout(() => this.startMoleShrinking(), 500); // 添加延遲
             }
         };
     }
@@ -282,6 +286,7 @@ class Game {
     }
 
     startMoleShrinking() {
+        console.log("Starting mole shrinking animation"); // 添加日誌
         const initialScale = this.getMoleScaleX();
         const initialTranslateY = this.getMoleTranslateY();
         const targetScale = 0.5;
@@ -303,6 +308,8 @@ class Game {
 
             if (progress < 1) {
                 requestAnimationFrame(animate);
+            } else {
+                console.log("Mole shrinking animation completed"); // 添加日誌
             }
         };
 
