@@ -53,8 +53,6 @@
             transform: translate(-50%, -50%);
             border-radius: 50%;
             background-color: rgba(76, 175, 80, 0.1);
-            width: 80px;
-            height: 80px;
         }
         #feedback {
             position: absolute;
@@ -190,6 +188,10 @@
         let lastTimestamp = 0;
         const FRAME_DURATION = 1000 / 60; // 假設目標是60FPS
 
+        function init() {
+            updateCircleSize();
+            updateMoleHeight();
+        }
         function animateCircle(timestamp) {
             if (!lastTimestamp) lastTimestamp = timestamp;
             const elapsed = timestamp - lastTimestamp;
@@ -223,10 +225,9 @@
             actionButton.style.visibility = 'hidden';
             actionButton.style.pointerEvents = 'none';
             requestMotionPermission();
-            updateCircleSize(); // 添加这行来设置初始大小
             startShrinking();
-            document.getElementById('mole').style.display = 'block';
             updateMoleHeight();
+            updateCircleSize(); // 确保在游戏开始时更新圆圈大小
         }
 
         function requestMotionPermission() {
@@ -303,10 +304,10 @@
             timeWindow.style.height = `${TIME_WINDOW_SIZE}px`;
 
             // 視覺反饋邏輯
-            if (circleSize <= TIME_WINDOW_SIZE) {
-                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // 更明顯的綠色
+            if (isGameRunning && circleSize <= TIME_WINDOW_SIZE) {
+                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // 更明显的绿色
             } else {
-                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.1)'; // 原來的顏色
+                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.1)'; // 原来的颜色
             }
         }
 
@@ -450,7 +451,10 @@
 
         actionButton.addEventListener('click', handleActionButton);
         document.getElementById('mole').style.display = 'block';
-        updateMoleHeight();
+
+        window.addEventListener('load', init);
+
+
     </script>
 </body>
 </html>
