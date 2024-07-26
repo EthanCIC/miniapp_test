@@ -13,6 +13,7 @@ class Game {
         this.animationId = null;
         this.lastTimestamp = 0;
         this.FRAME_DURATION = 1000 / 60;
+        this.moleShakeCount = 0;
 
         this.elements = {
             gameArea: document.getElementById('gameArea'),
@@ -240,68 +241,52 @@ class Game {
         this.elements.timeWindow.style.display = 'block';
 
         if (!isEarlyEnd) {
-            this.startMoleShakingThenShrinking();
+            this.startMoleShaking();
         }
     }
 
-    startMoleShakingThenShrinking() {
-        let shakeCount = 0;
-        const totalShakes = 3;
-        const shakeInterval = 1000; // 1 second between shakes
+    startMoleShaking() {
+        this.moleShakeCount = 0;
+        this.shakeMole();
+    }
 
-        const shakeAndWait = () => {
-            if (shakeCount < totalShakes) {
-                this.shakeMole();
-                shakeCount++;
-                setTimeout(shakeAndWait, shakeInterval);
+    shakeMole() {
+        const shakeAnimation = [
+            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(-5deg)` },
+            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(0deg)` },
+            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(5deg)` },
+            { transform: `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()}) rotate(0deg)` }
+        ];
+
+        const shakeOptions = {
+            duration: 500,
+            iterations: 1
+        };
+
+        this.elements.mole.animate(shakeAnimation, shakeOptions).onfinish = () => {
+            this.moleShakeCount++;
+            if (this.moleShakeCount < 3) {
+                setTimeout(() => this.shakeMole(), 500); // 0.5秒休息
             } else {
                 this.startMoleShrinking();
             }
         };
-
-        shakeAndWait();
     }
 
-    shakeMole() {
-        const originalTransform = this.elements.mole.style.transform;
-        const shakeAmount = 50; // pixels
-        const shakeDuration = 100; // milliseconds
-        let startTime;
-
-        const shake = (currentTime) => {
-            if (!startTime) startTime = currentTime;
-            const elapsedTime = currentTime - startTime;
-            const progress = Math.min(elapsedTime / shakeDuration, 1);
-
-            const offset = Math.sin(progress * Math.PI * 2) * shakeAmount;
-            
-            // Parse the original transform to get translateY and scaleX values
-            const translateYMatch = originalTransform.match(/translateY\(([-\d.]+)%\)/);
-            const scaleXMatch = originalTransform.match(/scaleX\(([-\d.]+)\)/);
-            
-            const translateY = translateYMatch ? translateYMatch[1] : 0;
-            const scaleX = scaleXMatch ? scaleXMatch[1] : 1;
-
-            // Apply the shake effect while maintaining the original transform
-            this.elements.mole.style.transform = `translateY(${translateY}%) scaleX(${scaleX}) translateX(${offset}px)`;
-
-            if (progress < 1) {
-                requestAnimationFrame(shake);
-            } else {
-                this.elements.mole.style.transform = originalTransform;
-            }
-        };
-
-        requestAnimationFrame(shake);
+    getMoleTranslateY() {
+        return 75 - (Math.min(this.score / 10, 1) * 75);
     }
 
+    getMoleScaleX() {
+        return 0.5 + (Math.min(this.score / 10, 1) * 0.8);
+    }
 
     startMoleShrinking() {
-        const initialScale = 0.5 + (Math.min(this.score / 10, 1) * 0.8);
-        const initialTranslateY = 75 - (Math.min(this.score / 10, 1) * 75);
+        const initialScale = this.getMoleScaleX();
+        const initialTranslateY = this.getMoleTranslateY();
         const targetScale = 0.5;
         const targetTranslateY = 75;
-        const duration = 1000; // Animation duration in milliseconds
+        const duration = 1000; // 動畫持續時間（毫秒）
         let startTime;
 
         const animate = (currentTime) => {
@@ -309,7 +294,6 @@ class Game {
             const elapsedTime = currentTime - startTime;
             const progress = Math.min(elapsedTime / duration, 1);
 
-            // Easing function for smooth animation
             const easeProgress = this.easeInOutCubic(progress);
 
             const currentScale = initialScale + (targetScale - initialScale) * easeProgress;
@@ -325,8 +309,8 @@ class Game {
         requestAnimationFrame(animate);
     }
 
+    // Add this easing function to the Game class
     easeInOutCubic(t) {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
-
 }
