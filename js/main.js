@@ -1,6 +1,6 @@
 import { startGame, handleActionButton } from './game.js';
 import { init, updateMoleHeight } from './ui.js';
-import { enableDevMode } from '../../accelerometer.js';
+import { enableDevMode, requestMotionPermission } from './accelerometer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     init();
