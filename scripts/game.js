@@ -224,7 +224,6 @@ class Game {
         this.elements.mole.style.transform = `translateY(${translateY}%) scaleX(${scaleX})`;
     }
 
-
     end(isEarlyEnd = false) {
         this.isRunning = false;
         this.isFeverMode = false;
@@ -251,7 +250,7 @@ class Game {
     }
 
     shakeMole() {
-        const currentTransform = `translateY(${this.getMoleTranslateY()}%) scaleX(${this.getMoleScaleX()})`;
+        const currentTransform = this.elements.mole.style.transform || `translateY(75%) scaleX(0.5)`;
         const shakeAnimation = [
             { transform: `${currentTransform} rotate(-5deg)` },
             { transform: `${currentTransform} rotate(0deg)` },
@@ -277,18 +276,9 @@ class Game {
         };
     }
 
-    getMoleTranslateY() {
-        return 75 - (Math.min(this.score / 10, 1) * 75);
-    }
-
-    getMoleScaleX() {
-        return 0.5 + (Math.min(this.score / 10, 1) * 0.8);
-    }
-
     startMoleShrinking() {
-        console.log("Starting mole shrinking animation"); // 添加日誌
-        const initialScale = this.getMoleScaleX();
-        const initialTranslateY = this.getMoleTranslateY();
+        const initialScale = 0.5 + (Math.min(this.score / 10, 1) * 0.8);
+        const initialTranslateY = 75 - (Math.min(this.score / 10, 1) * 75);
         const targetScale = 0.5;
         const targetTranslateY = 75;
         const duration = 1000; // 動畫持續時間（毫秒）
@@ -308,15 +298,12 @@ class Game {
 
             if (progress < 1) {
                 requestAnimationFrame(animate);
-            } else {
-                console.log("Mole shrinking animation completed"); // 添加日誌
             }
         };
 
         requestAnimationFrame(animate);
     }
 
-    // Add this easing function to the Game class
     easeInOutCubic(t) {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
