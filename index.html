@@ -64,7 +64,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             border-radius: 50%;
-            background-color: rgba(15, 52, 96, 0.2);
+            background-color: rgba(15, 52, 96, 0.4);
             transition: all 0.05s linear;
         }
         #timeWindow {
@@ -311,7 +311,7 @@
                     if (circleSize <= 0) {
                         if (!currentCycleScoreChanged) {
                             updateScore(-1);
-                            showFeedback('rgba(244, 67, 54, 1)');
+                            showFeedback('rgba(244, 67, 54, 0.6)');
                             vibrateDevice();
                         }
                         resetCircle();
