@@ -413,7 +413,7 @@
             if (isGameRunning && circleSize <= TIME_WINDOW_SIZE) {
                 timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.6)'; // 更明显的绿色
             } else {
-                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.1)'; // 原来的颜色
+                timeWindow.style.backgroundColor = 'rgba(76, 175, 80, 0.4)'; // 原来的颜色
             }
         }
 
@@ -442,7 +442,7 @@
 
         function showFeedback(color) {
             feedback.style.backgroundColor = color;
-            feedback.style.opacity = 0.5;
+            feedback.style.opacity = 0.7;
             setTimeout(() => {
                 feedback.style.opacity = 0;
             }, 100);
