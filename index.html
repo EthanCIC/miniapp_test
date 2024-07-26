@@ -37,7 +37,7 @@
 
         #accelerationChart {
             width: 100%;
-            height: 100px;
+            height: 150px;  /* Increased height */
         }
         #scoreDisplay {
             font-size: 48px;
@@ -253,21 +253,47 @@
             
             ctx.clearRect(0, 0, width, height);
             
+            // Draw background grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let i = 0; i < maxAcceleration; i += 10) {
+                const y = height - (i / maxAcceleration * height);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // Draw acceleration line
             ctx.beginPath();
             ctx.strokeStyle = 'white';
-            ctx.moveTo(0, height - (accelerationData[0] * 5));
-            
-            for (let i = 1; i < CHART_POINTS; i++) {
-                ctx.lineTo(i * (width / CHART_POINTS), height - (accelerationData[i] * 5));
+            ctx.lineWidth = 2;
+            for (let i = 0; i < CHART_POINTS; i++) {
+                const x = i * (width / CHART_POINTS);
+                const y = height - (accelerationData[i] / maxAcceleration * height);
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
             }
             ctx.stroke();
             
             // Draw threshold line
+            const thresholdY = height - (shakeThreshold / maxAcceleration * height);
             ctx.beginPath();
             ctx.strokeStyle = 'red';
-            ctx.moveTo(0, height - (shakeThreshold * 5));
-            ctx.lineTo(width, height - (shakeThreshold * 5));
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, thresholdY);
+            ctx.lineTo(width, thresholdY);
             ctx.stroke();
+
+            // Add labels
+            ctx.fillStyle = 'white';
+            ctx.font = '12px monospace';
+            ctx.fillText(`${maxAcceleration.toFixed(0)}`, 5, 15);
+            ctx.fillText('0', 5, height - 5);
+            ctx.fillStyle = 'red';
+            ctx.fillText(`${shakeThreshold.toFixed(0)}`, 5, thresholdY - 5);
         }
 
         function animateCircle(timestamp) {
